@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArtAssist</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="logo">✦ ArtAssist</div>
+      <button class="nav active" data-page="dashboard">🏠 Dashboard</button>
+      <button class="nav" data-page="ideas">💡 Ide Konten</button>
+      <button class="nav" data-page="caption">✏️ Caption</button>
+      <button class="nav" data-page="hashtag"># Hashtag</button>
+      <button class="nav" data-page="analyze">📊 Analisis</button>
+      <button class="nav" data-page="thread">✍️ Thread</button>
+      <button class="nav" data-page="schedule">📅 Jadwal</button>
+      <button class="nav" data-page="tips">⭐ Tips</button>
+      <button class="nav" data-page="settings">⚙️ Settings</button>
+    </div>
+
+    <div class="content">
+      <div id="dashboard" class="page active">
+        <h1>Selamat datang 👋</h1>
+        <p style="margin-bottom: 1.5rem">
+          Ringkasan aktivitas posting kamu bulan ini.
+        </p>
+
+        <div class="dashboard-grid">
+          <!-- Bulan ini -->
+          <div class="dash-card">
+            <div class="dash-card-title">📅 Bulan Ini</div>
+            <div
+              class="dash-stat-row"
+              id="dash-month-label"
+              style="color: #aaa; font-size: 13px; margin-bottom: 0.75rem"
+            ></div>
+            <div class="dash-stats">
+              <div class="dash-stat">
+                <div class="dash-stat-num" id="dash-total-posts">—</div>
+                <div class="dash-stat-label">Total Post</div>
+              </div>
+              <div class="dash-stat">
+                <div class="dash-stat-num" id="dash-artwork-count">—</div>
+                <div class="dash-stat-label">Karya Baru</div>
+              </div>
+              <div class="dash-stat">
+                <div class="dash-stat-num" id="dash-days-left">—</div>
+                <div class="dash-stat-label">Hari Tersisa</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Platform breakdown -->
+          <div class="dash-card">
+            <div class="dash-card-title">📊 Platform</div>
+            <div id="dash-platform-breakdown" style="margin-top: 0.5rem"></div>
+          </div>
+
+          <!-- Upcoming posts -->
+          <div class="dash-card dash-card-wide">
+            <div class="dash-card-title">🔜 Posting Berikutnya</div>
+            <div id="dash-upcoming" style="margin-top: 0.75rem"></div>
+          </div>
+
+          <!-- Konten type breakdown -->
+          <div class="dash-card">
+            <div class="dash-card-title">🎨 Tipe Konten</div>
+            <div id="dash-type-breakdown" style="margin-top: 0.5rem"></div>
+          </div>
+
+          <!-- Tips singkat -->
+          <div class="dash-card">
+            <div class="dash-card-title">💡 Reminder</div>
+            <div
+              id="dash-reminder"
+              style="
+                margin-top: 0.5rem;
+                font-size: 13px;
+                color: #aaa;
+                line-height: 1.7;
+              "
+            ></div>
+          </div>
+        </div>
+      </div>
+      <div id="ideas" class="page">
+        <h1>💡 Ide Konten</h1>
+
+        <div class="form-group">
+          <label>Platform</label>
+          <select id="idea-platform">
+            <option>Instagram</option>
+            <option>TikTok</option>
+            <option>Twitter/X</option>
+            <option>Facebook</option>
+            <option>Semua Platform</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Jenis Konten</label>
+          <select id="idea-type">
+            <option>Fanart / karakter original</option>
+            <option>Speed draw / proses menggambar</option>
+            <option>Before & after sketch</option>
+            <option>Character design sheet</option>
+            <option>WIP (work in progress)</option>
+            <option>Tutorial singkat</option>
+            <option>Relatable artist meme</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Mood / Tema (opsional)</label>
+          <input
+            type="text"
+            id="idea-mood"
+            placeholder="cth: cozy, school life, summer..."
+          />
+        </div>
+
+        <button class="btn-generate" onclick="generateIdeas()">
+          ✦ Generate Ide
+        </button>
+
+        <div id="ideas-result" class="result-box" style="display: none"></div>
+      </div>
+      <div id="caption" class="page">
+        <h1>✏️ Caption & Hook</h1>
+
+        <div class="form-group">
+          <label>Platform</label>
+          <select id="cap-platform">
+            <option>Instagram</option>
+            <option>TikTok</option>
+            <option>Twitter/X</option>
+            <option>Facebook</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tujuan Post</label>
+          <select id="cap-goal">
+            <option>Pamerkan karya terbaru</option>
+            <option>Dapat engagement (like/komen)</option>
+            <option>Tumbuhkan followers</option>
+            <option>Behind the scenes</option>
+            <option>Promosi commission</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Deskripsi karya kamu</label>
+          <textarea
+            id="cap-desc"
+            rows="3"
+            placeholder="cth: ilustrasi cowok shota pakai seragam sekolah sambil tidur di kelas, mood soft dan cozy..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Tone / Gaya Caption</label>
+          <select id="cap-tone">
+            <option value="cute">🌸 Cute & Menggemaskan</option>
+            <option value="casual">😊 Santai & Friendly</option>
+            <option value="hype">🔥 Hype & Excited</option>
+            <option value="story">📖 Storytelling</option>
+            <option value="funny">😂 Humoris</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Upload Karya (opsional — Gemma akan analisis otomatis)</label>
+          <div
+            class="upload-area"
+            id="upload-area"
+            onclick="document.getElementById('img-upload').click()"
+          >
+            <input
+              type="file"
+              id="img-upload"
+              accept="image/*"
+              style="display: none"
+              onchange="previewImage(event)"
+            />
+            <div id="upload-placeholder">
+              🖼️ Klik untuk upload gambar karya kamu
+            </div>
+            <img
+              id="img-preview"
+              style="
+                display: none;
+                max-width: 100%;
+                max-height: 200px;
+                border-radius: 8px;
+              "
+            />
+          </div>
+          <button
+            class="btn-clear"
+            id="btn-clear"
+            onclick="clearImage()"
+            style="display: none"
+          >
+            ✕ Hapus gambar
+          </button>
+        </div>
+
+        <button class="btn-generate" onclick="generateCaption()">
+          ✦ Buat Caption
+        </button>
+        <div id="caption-result" class="result-box" style="display: none"></div>
+      </div>
+      <div id="hashtag" class="page">
+        <h1># Hashtag</h1>
+
+        <div class="form-group">
+          <label>Upload Karya (opsional)</label>
+          <div
+            class="upload-area"
+            id="upload-area-hash"
+            onclick="document.getElementById('img-upload-hash').click()"
+          >
+            <input
+              type="file"
+              id="img-upload-hash"
+              accept="image/*"
+              style="display: none"
+              onchange="previewImageHash(event)"
+            />
+            <div id="upload-placeholder-hash">
+              🖼️ Klik untuk upload gambar karya kamu
+            </div>
+            <img
+              id="img-preview-hash"
+              style="
+                display: none;
+                max-width: 100%;
+                max-height: 200px;
+                border-radius: 8px;
+              "
+            />
+          </div>
+          <button
+            class="btn-clear"
+            id="btn-clear-hash"
+            onclick="clearImageHash()"
+            style="display: none"
+          >
+            ✕ Hapus gambar
+          </button>
+        </div>
+
+        <div class="form-group">
+          <label>Platform</label>
+          <select id="hash-platform">
+            <option>Instagram</option>
+            <option>TikTok</option>
+            <option>Twitter/X</option>
+            <option>Facebook</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Deskripsi konten (opsional jika sudah upload gambar)</label>
+          <input
+            type="text"
+            id="hash-desc"
+            placeholder="cth: anime shota summer school uniform cute"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Jumlah Hashtag</label>
+          <select id="hash-count">
+            <option value="10">10 hashtag</option>
+            <option value="20" selected>20 hashtag</option>
+            <option value="30">30 hashtag</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Strategi</label>
+          <select id="hash-strategy">
+            <option value="mix">
+              🎯 Mix — campuran niche, medium, besar (rekomendasi)
+            </option>
+            <option value="niche">
+              🎨 Niche only — komunitas kecil tapi targeted
+            </option>
+            <option value="trending">
+              🔥 Trending mix — viral dan populer
+            </option>
+          </select>
+        </div>
+
+        <button class="btn-generate" onclick="generateHashtags()">
+          ✦ Generate Hashtag
+        </button>
+        <div id="hashtag-result" class="result-box" style="display: none"></div>
+        <button
+          class="btn-copy"
+          id="btn-copy-hash"
+          onclick="copyHashtags()"
+          style="display: none"
+        >
+          📋 Copy Semua Hashtag
+        </button>
+      </div>
+      <div id="analyze" class="page">
+        <h1>📊 Analisis Tren</h1>
+        <p style="margin-bottom: 1.5rem">
+          Riset tren konten anime art untuk bantu kamu posting lebih strategis.
+        </p>
+
+        <div class="form-row" style="max-width: 700px; margin-bottom: 1rem">
+          <div class="form-group" style="flex: 1">
+            <label>Platform</label>
+            <select id="trend-platform">
+              <option>Instagram</option>
+              <option>TikTok</option>
+              <option>Twitter/X</option>
+              <option>Semua Platform</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1">
+            <label>Fokus Analisis</label>
+            <select id="trend-focus">
+              <option value="theme">🎨 Tema & Mood Populer</option>
+              <option value="format">📱 Format Konten Terbaik</option>
+              <option value="time">⏰ Waktu Posting Optimal</option>
+              <option value="hashtag">🔖 Tren Hashtag</option>
+              <option value="full">✦ Analisis Lengkap</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1">
+            <label>Bulan Referensi</label>
+            <input type="month" id="trend-month" />
+          </div>
+        </div>
+
+        <button class="btn-generate" onclick="generateTrendAnalysis()">
+          ✦ Analisis Sekarang
+        </button>
+
+        <div
+          id="trend-result"
+          style="display: none; margin-top: 1.5rem; max-width: 700px"
+        >
+          <!-- Summary cards -->
+          <div id="trend-cards" class="trend-cards"></div>
+
+          <!-- Detail -->
+          <div class="dash-card" style="margin-top: 12px">
+            <div class="dash-card-title">📋 Detail Analisis</div>
+            <div
+              id="trend-detail"
+              style="
+                margin-top: 0.75rem;
+                font-size: 13px;
+                color: #ccc;
+                line-height: 1.8;
+                white-space: pre-wrap;
+              "
+            ></div>
+          </div>
+
+          <!-- Rekomendasi ke jadwal -->
+          <div class="dash-card" style="margin-top: 12px">
+            <div class="dash-card-title">🗓️ Rekomendasi untuk Jadwalmu</div>
+            <div id="trend-schedule-rec" style="margin-top: 0.75rem"></div>
+            <button
+              class="btn-generate"
+              style="margin-top: 1rem; font-size: 12px; padding: 8px 16px"
+              onclick="applyTrendToSchedule()"
+            >
+              ✦ Terapkan ke Jadwal Bulan Ini
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="schedule" class="page">
+        <h1>📅 Jadwal Posting</h1>
+
+        <!-- Profil Artist -->
+        <div class="artist-profile-bar" id="artist-profile-bar">
+          <div class="form-row">
+            <div class="form-group" style="flex: 1">
+              <label>Kompleksitas karya utama</label>
+              <select id="art-complexity">
+                <option value="sketch">Sketch / Lineart (1-2 hari)</option>
+                <option value="medium" selected>
+                  Medium / Coloring (3-4 hari)
+                </option>
+                <option value="detail">
+                  Full detail / Rendering (5-7 hari)
+                </option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>Hari aktif menggambar/minggu</label>
+              <select id="art-active-days">
+                <option value="2">1-2 hari</option>
+                <option value="3" selected>3-4 hari</option>
+                <option value="5">5-6 hari</option>
+                <option value="7">Setiap hari</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>Bulan & Tahun</label>
+              <input type="month" id="schedule-month" />
+            </div>
+          </div>
+        </div>
+
+        <div class="schedule-toolbar">
+          <button class="btn-generate" onclick="generateScheduleSuggestion()">
+            ✦ Auto-isi Jadwal dengan AI
+          </button>
+          <button
+            class="btn-copy"
+            onclick="exportSchedule()"
+            style="margin-left: 8px"
+          >
+            📋 Export Jadwal
+          </button>
+          <button
+            class="btn-copy"
+            onclick="clearMonthSchedule()"
+            style="margin-left: 8px; color: #ff6b6b"
+          >
+            🗑️ Kosongkan Bulan Ini
+          </button>
+        </div>
+
+        <!-- Legend -->
+        <div class="schedule-legend">
+          <span
+            ><span class="legend-dot" style="background: #a78bfa"></span> Karya
+            Baru</span
+          >
+          <span
+            ><span class="legend-dot" style="background: #f59e0b"></span> WIP /
+            BTS</span
+          >
+          <span
+            ><span class="legend-dot" style="background: #10b981"></span> Konten
+            Non-Karya</span
+          >
+          <span
+            ><span class="legend-dot" style="background: #3b82f6"></span> Thread
+            / Carousel</span
+          >
+        </div>
+
+        <div class="calendar-month" id="calendar-month"></div>
+
+        <!-- Modal -->
+        <div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+          <div class="modal" onclick="event.stopPropagation()">
+            <h2 style="font-size: 16px; margin-bottom: 1rem">📝 Post Detail</h2>
+            <div class="form-group">
+              <label>Tanggal</label>
+              <input
+                type="date"
+                id="modal-date"
+                readonly
+                style="opacity: 0.6"
+              />
+            </div>
+            <div class="form-group">
+              <label>Platform</label>
+              <select id="modal-platform">
+                <option>Instagram</option>
+                <option>TikTok</option>
+                <option>Twitter/X</option>
+                <option>Facebook</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Jam Posting</label>
+              <input type="time" id="modal-time" value="19:00" />
+            </div>
+            <div class="form-group">
+              <label>Jenis Konten</label>
+              <select id="modal-type">
+                <option value="artwork">
+                  🖼️ Karya Baru (butuh waktu gambar)
+                </option>
+                <option value="wip">📸 WIP / Behind the Scenes</option>
+                <option value="carousel">📖 Carousel / Thread</option>
+                <option value="noncreative">✍️ Caption / Teks / Meme</option>
+                <option value="speedpaint">🎬 Speed draw / Reel</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Catatan</label>
+              <textarea
+                id="modal-note"
+                rows="2"
+                placeholder="cth: OC baru, summer theme..."
+              ></textarea>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 1rem">
+              <button class="btn-generate" onclick="savePost()">Simpan</button>
+              <button class="btn-copy" onclick="closeModal()">Batal</button>
+              <button
+                class="btn-clear"
+                id="btn-delete-post"
+                onclick="deletePost()"
+                style="margin-left: auto; display: none"
+              >
+                🗑️ Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="thread" class="page">
+        <h1>✍️ Thread / Carousel</h1>
+
+        <div class="form-group">
+          <label>Platform</label>
+          <select id="thread-platform">
+            <option value="twitter">Twitter/X — Thread</option>
+            <option value="instagram">Instagram — Carousel Caption</option>
+            <option value="tiktok">TikTok — Multi-slide Text</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Topik / Tema</label>
+          <input
+            type="text"
+            id="thread-topic"
+            placeholder="cth: tips lineart bersih, proses karakter dari sketch ke coloring, cara nemuin artstyle sendiri..."
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Tujuan</label>
+          <select id="thread-goal">
+            <option>Edukasi / Tutorial</option>
+            <option>Cerita proses karya</option>
+            <option>Opini / Hot take</option>
+            <option>Showcase karya series</option>
+            <option>Personal story / Artist journey</option>
+            <option>Tips & Trik</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Jumlah Slide / Tweet</label>
+          <select id="thread-count">
+            <option value="5">5</option>
+            <option value="7" selected>7</option>
+            <option value="10">10</option>
+            <option value="12">12</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tone</label>
+          <select id="thread-tone">
+            <option value="casual">😊 Santai & Personal</option>
+            <option value="edu">📚 Edukatif & Informatif</option>
+            <option value="hype">🔥 Hype & Energetik</option>
+            <option value="story">📖 Storytelling</option>
+          </select>
+        </div>
+
+        <button class="btn-generate" onclick="generateThread()">
+          ✦ Generate Thread / Carousel
+        </button>
+
+        <div
+          id="thread-result-container"
+          style="display: none; margin-top: 1.5rem"
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              max-width: 600px;
+              margin-bottom: 0.75rem;
+            "
+          >
+            <span style="font-size: 13px; color: #aaa" id="thread-result-label"
+              >Thread</span
+            >
+            <button class="btn-copy" onclick="copyThread()">
+              📋 Copy Semua
+            </button>
+          </div>
+          <div id="thread-slides"></div>
+        </div>
+      </div>
+      <div id="tips" class="page">
+        <h1>⭐ Tips Growth</h1>
+        <p style="margin-bottom: 1.5rem">
+          Strategi tumbuh untuk illustrator anime — dikurasi + dipersonalisasi
+          AI.
+        </p>
+
+        <!-- Filter Bar -->
+        <div class="tips-filter-bar">
+          <div class="tips-filter-group">
+            <span class="tips-filter-label">Platform</span>
+            <div class="tips-filter-btns">
+              <button
+                class="tips-tag active"
+                data-filter="platform"
+                data-val="semua"
+              >
+                Semua
+              </button>
+              <button
+                class="tips-tag"
+                data-filter="platform"
+                data-val="Instagram"
+              >
+                Instagram
+              </button>
+              <button class="tips-tag" data-filter="platform" data-val="TikTok">
+                TikTok
+              </button>
+              <button
+                class="tips-tag"
+                data-filter="platform"
+                data-val="Twitter/X"
+              >
+                Twitter/X
+              </button>
+            </div>
+          </div>
+          <div class="tips-filter-group">
+            <span class="tips-filter-label">Kategori</span>
+            <div class="tips-filter-btns">
+              <button
+                class="tips-tag active"
+                data-filter="category"
+                data-val="semua"
+              >
+                Semua
+              </button>
+              <button
+                class="tips-tag"
+                data-filter="category"
+                data-val="Algoritma"
+              >
+                Algoritma
+              </button>
+              <button
+                class="tips-tag"
+                data-filter="category"
+                data-val="Engagement"
+              >
+                Engagement
+              </button>
+              <button
+                class="tips-tag"
+                data-filter="category"
+                data-val="Konsistensi"
+              >
+                Konsistensi
+              </button>
+              <button
+                class="tips-tag"
+                data-filter="category"
+                data-val="Branding"
+              >
+                Branding
+              </button>
+            </div>
+          </div>
+          <div class="tips-filter-group">
+            <span class="tips-filter-label">Goals</span>
+            <div class="tips-filter-btns">
+              <button
+                class="tips-tag active"
+                data-filter="goal"
+                data-val="semua"
+              >
+                Semua
+              </button>
+              <button
+                class="tips-tag"
+                data-filter="goal"
+                data-val="Nambah Followers"
+              >
+                Nambah Followers
+              </button>
+              <button
+                class="tips-tag"
+                data-filter="goal"
+                data-val="Dapet Komisi"
+              >
+                Dapet Komisi
+              </button>
+              <button class="tips-tag" data-filter="goal" data-val="Viral">
+                Viral
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tips Cards Grid -->
+        <div class="tips-grid" id="tips-grid"></div>
+
+        <!-- Divider -->
+        <div
+          style="
+            border-top: 1px solid #2a2a2a;
+            margin: 2rem 0;
+            max-width: 860px;
+          "
+        ></div>
+
+        <!-- AI Personal Tips Section -->
+        <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 0.25rem">
+          🤖 Tips Personal dari AI
+        </h2>
+        <p style="margin-bottom: 1.25rem; font-size: 13px">
+          Ceritain situasimu, AI kasih strategi yang spesifik buat kamu.
+        </p>
+
+        <div style="max-width: 560px">
+          <div class="form-row">
+            <div class="form-group" style="flex: 1">
+              <label>Platform utama</label>
+              <select id="ai-tips-platform">
+                <option>Instagram</option>
+                <option>TikTok</option>
+                <option>Twitter/X</option>
+                <option>Semua Platform</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>Masalah spesifik</label>
+              <select id="ai-tips-problem">
+                <option>Engagement drop</option>
+                <option>Followers stagnan</option>
+                <option>Reach kecil</option>
+                <option>Susah dapet komisi</option>
+                <option>Konten kurang viral</option>
+                <option>Algoritma berubah</option>
+                <option>Burnout / konsistensi</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex: 1">
+              <label>Followers saat ini</label>
+              <select id="ai-tips-followers">
+                <option value="nano">Di bawah 1K</option>
+                <option value="micro">1K – 10K</option>
+                <option value="mid">10K – 50K</option>
+                <option value="macro">50K+</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>Target dalam 3 bulan</label>
+              <select id="ai-tips-target">
+                <option>2x followers</option>
+                <option>Dapet klien komisi pertama</option>
+                <option>1 post viral (10K+ views)</option>
+                <option>Konsisten posting 3x/minggu</option>
+                <option>Bangun komunitas loyal</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Describe situasimu (opsional)</label>
+            <textarea
+              id="ai-tips-desc"
+              rows="3"
+              placeholder="cth: Aku artist 2K followers di IG, posting fanart anime 2x seminggu, tapi engagement-ku turun drastis 2 minggu terakhir..."
+            ></textarea>
+          </div>
+          <button class="btn-generate" onclick="generateAITips()">
+            ✦ Minta Tips AI
+          </button>
+        </div>
+
+        <div
+          id="ai-tips-result"
+          class="result-box"
+          style="display: none; max-width: 560px; margin-top: 1.25rem"
+        ></div>
+      </div>
+
+      <div id="settings" class="page settings-centered">
+        <h1>⚙️ Settings</h1>
+      <p style="margin-bottom: 1.75rem">
+        Konfigurasi perilaku app di sistem kamu.
+      </p>
+
+      <div class="settings-section">
+        <div class="settings-section-title">🖥️ Sistem</div>
+
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="settings-row-label">Auto-start saat laptop nyala</div>
+            <div class="settings-row-desc">
+              ArtAssist otomatis berjalan di background saat Windows start
+            </div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-autostart" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="settings-row-label">Notifikasi pengingat jadwal</div>
+            <div class="settings-row-desc">
+              Notif sistem muncul tepat saat waktu posting tiba sesuai jadwalmu
+            </div>
+          </div>
+          <span class="settings-badge-on">• Selalu aktif</span>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">💡 Cara kerja notifikasi</div>
+        <div class="settings-info-list">
+          <div class="settings-info-item">
+            ⏰ Notif dikirim tepat pada jam posting yang kamu set di halaman
+            Jadwal
+          </div>
+          <div class="settings-info-item">
+            📱 App harus berjalan (boleh di background / minimize) agar notif
+            bisa muncul
+          </div>
+          <div class="settings-info-item">
+            🖱️ Klik notifikasi untuk langsung fokus ke jendela ArtAssist
+          </div>
+          <div class="settings-info-item">
+            🔄 Jadwal dicek setiap 30 detik — notif tidak akan telat lebih dari
+            30 detik
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end .content -->
+
+    <script src="redditFetch.js"></script>
+
+    <script src="renderer.js"></script>
+    <div
+      id="toast"
+      style="
+        display: none;
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: #1a1a1a;
+        border: 1px solid #a78bfa;
+        color: #f0f0f0;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-size: 13px;
+        z-index: 999;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      "
+    ></div>
+  </body>
+</html>

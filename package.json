@@ -1,0 +1,44 @@
+{
+  "name": "artassist",
+  "version": "1.0.0",
+  "description": "AI Social Media Assistant untuk Illustrator",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder build --win",
+    "release": "electron-builder build --win --publish always"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "build": {
+    "appId": "com.artassist.app",
+    "productName": "ArtAssist",
+    "publish": {
+      "provider": "github",
+      "owner": "raookami",
+      "repo": "artassist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "files": [
+      "**/*",
+      "!node_modules/.cache"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^42.3.0",
+    "electron-builder": "^26.0.0",
+    "snoowrap": "^1.23.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  }
+}
