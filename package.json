@@ -1,6 +1,6 @@
 {
   "name": "artassist",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "AI Social Media Assistant untuk Illustrator",
   "main": "main.js",
   "scripts": {
@@ -39,6 +39,7 @@
     "snoowrap": "^1.23.0"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "electron-updater": "^6.3.9"
   }
 }

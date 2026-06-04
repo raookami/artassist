@@ -1,8 +1,7 @@
-const { getTrendContext } = require('./redditFetch.js');
 // =====================
 // REDDIT DATA FETCHER
 // =====================
-// Tidak butuh API key — pakai Reddit JSON publik
+// Pakai RSS feed (.rss) — lebih stabil dari JSON endpoint
 
 const SUBREDDITS = {
   art: [
@@ -22,9 +21,32 @@ const SUBREDDITS = {
   ],
 };
 
-// Cache biar tidak fetch berulang dalam sesi yang sama
 const redditCache = {};
 const CACHE_DURATION = 30 * 60 * 1000; // 30 menit
+
+// Parse RSS XML sederhana, ambil judul post
+function parseRSS(xml) {
+  const posts = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  let match;
+  while ((match = itemRegex.exec(xml)) !== null) {
+    const item = match[1];
+    const titleMatch =
+      item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) ||
+      item.match(/<title>(.*?)<\/title>/);
+    const title = titleMatch ? titleMatch[1].trim() : '';
+    if (title && title !== 'reddit: the front page of the internet') {
+      posts.push({
+        title,
+        score: 0,
+        comments: 0,
+        flair: '',
+        url: '',
+      });
+    }
+  }
+  return posts;
+}
 
 async function fetchSubreddit(
   subredditName,
@@ -43,18 +65,17 @@ async function fetchSubreddit(
   }
 
   try {
-    const url = `https://old.reddit.com/r/${subredditName}/${sort}.json?limit=${limit}&t=${time}`;
+    // Pakai RSS feed — jauh lebih stabil dari .json endpoint
+    const url = `https://www.reddit.com/r/${subredditName}/${sort}.rss?limit=${limit}`;
     const { ipcRenderer } = require('electron');
     const raw = await ipcRenderer.invoke('fetch-reddit', url);
-    const data = JSON.parse(raw);
-    const posts = json.data.children.map((p) => ({
-      title: p.data.title,
-      score: p.data.score,
-      comments: p.data.num_comments,
-      flair: p.data.link_flair_text || '',
-      url: `https://reddit.com${p.data.permalink}`,
-    }));
 
+    // Validasi: kalau dapat HTML bukan RSS, lempar error
+    if (raw.trim().startsWith('<!DOCTYPE') || raw.trim().startsWith('<html')) {
+      throw new Error('Got HTML instead of RSS');
+    }
+
+    const posts = parseRSS(raw);
     redditCache[cacheKey] = { data: posts, timestamp: now };
     return posts;
   } catch (err) {
@@ -63,7 +84,6 @@ async function fetchSubreddit(
   }
 }
 
-// Fetch semua subreddit sekaligus, return ringkasan
 async function fetchAllTrends() {
   const results = {
     art: [],
@@ -72,7 +92,6 @@ async function fetchAllTrends() {
     fetchedAt: new Date().toLocaleString('id-ID'),
   };
 
-  // Fetch semua paralel
   const artFetches = SUBREDDITS.art.map((s) =>
     fetchSubreddit(s.name, 'top', 'week', 8),
   );
@@ -89,7 +108,6 @@ async function fetchAllTrends() {
     Promise.all(animationFetches),
   ]);
 
-  // Gabungkan dan sort by score
   artResults.forEach((posts, i) => {
     results.art.push(
       ...posts.map((p) => ({ ...p, source: SUBREDDITS.art[i].label })),
@@ -113,7 +131,6 @@ async function fetchAllTrends() {
   return results;
 }
 
-// Format trends jadi string konteks untuk Ollama
 function formatTrendsForPrompt(trends) {
   if (!trends) return 'Data tren tidak tersedia.';
 
@@ -122,7 +139,7 @@ function formatTrendsForPrompt(trends) {
   if (trends.anime.length > 0) {
     context += `🔥 ANIME/MANGA LAGI POPULER:\n`;
     trends.anime.slice(0, 6).forEach((p) => {
-      context += `- "${p.title}" (${p.score} upvotes, ${p.comments} komentar) — ${p.source}\n`;
+      context += `- "${p.title}" — ${p.source}\n`;
     });
     context += '\n';
   }
@@ -130,7 +147,7 @@ function formatTrendsForPrompt(trends) {
   if (trends.art.length > 0) {
     context += `🎨 TREN ANIME ART & ILUSTRASI:\n`;
     trends.art.slice(0, 6).forEach((p) => {
-      context += `- "${p.title}" (${p.score} upvotes) — ${p.source}\n`;
+      context += `- "${p.title}" — ${p.source}\n`;
     });
     context += '\n';
   }
@@ -138,7 +155,7 @@ function formatTrendsForPrompt(trends) {
   if (trends.animation.length > 0) {
     context += `🎬 TREN ANIMASI:\n`;
     trends.animation.slice(0, 4).forEach((p) => {
-      context += `- "${p.title}" (${p.score} upvotes) — ${p.source}\n`;
+      context += `- "${p.title}" — ${p.source}\n`;
     });
     context += '\n';
   }
@@ -146,7 +163,6 @@ function formatTrendsForPrompt(trends) {
   return context;
 }
 
-// Status loading global
 let trendDataCache = null;
 let trendDataLoading = false;
 let trendDataLoadedAt = null;
@@ -161,7 +177,6 @@ async function getTrendContext(forceRefresh = false) {
   }
 
   if (trendDataLoading) {
-    // Tunggu sampai selesai
     await new Promise((resolve) => {
       const check = setInterval(() => {
         if (!trendDataLoading) {
@@ -185,6 +200,7 @@ async function getTrendContext(forceRefresh = false) {
 
   return formatTrendsForPrompt(trendDataCache);
 }
+
 if (typeof module !== 'undefined') {
   module.exports = { getTrendContext, fetchAllTrends, formatTrendsForPrompt };
 }

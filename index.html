@@ -17,6 +17,7 @@
       <button class="nav" data-page="thread">✍️ Thread</button>
       <button class="nav" data-page="schedule">📅 Jadwal</button>
       <button class="nav" data-page="tips">⭐ Tips</button>
+      <button class="nav" data-page="chat">💬 Chat AI</button>
       <button class="nav" data-page="settings">⚙️ Settings</button>
     </div>
 
@@ -85,6 +86,73 @@
           </div>
         </div>
       </div>
+      <!-- ===================== -->
+      <!-- 2. Tambah section ini sejajar dengan section halaman lain -->
+      <!-- ===================== -->
+
+      <section class="page" id="chat">
+        <div class="chat-header">
+          <div class="chat-header-info">
+            <div class="chat-avatar">✦</div>
+            <div>
+              <div class="chat-title">ArtAssist AI</div>
+              <div class="chat-subtitle">Asisten pribadi illustrator kamu</div>
+            </div>
+          </div>
+          <button
+            class="chat-clear-btn"
+            onclick="clearChat()"
+            title="Hapus riwayat chat"
+          >
+            🗑️
+          </button>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-bubble ai">
+            <div class="chat-bubble-avatar">✦</div>
+            <div class="chat-bubble-content">
+              Halo! Aku ArtAssist AI 👋<br />
+              Tanya apa aja soal konten, caption, strategi posting, atau tips
+              menggambar. Aku siap bantu!
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-suggestions" id="chat-suggestions">
+          <button class="chat-suggest-btn" onclick="useSuggestion(this)">
+            💡 Ide konten minggu ini
+          </button>
+          <button class="chat-suggest-btn" onclick="useSuggestion(this)">
+            📈 Tips nambah followers IG
+          </button>
+          <button class="chat-suggest-btn" onclick="useSuggestion(this)">
+            🎨 Cara pricing komisi
+          </button>
+          <button class="chat-suggest-btn" onclick="useSuggestion(this)">
+            ⏰ Jam terbaik posting TikTok
+          </button>
+        </div>
+
+        <div class="chat-input-area">
+          <textarea
+            id="chat-input"
+            class="chat-input"
+            placeholder="Ketik pesan..."
+            rows="1"
+            onkeydown="handleChatKey(event)"
+            oninput="autoResizeInput(this)"
+          ></textarea>
+          <button
+            class="chat-send-btn"
+            id="chat-send-btn"
+            onclick="sendChatMessage()"
+          >
+            <span id="chat-send-icon">➤</span>
+          </button>
+        </div>
+      </section>
+
       <div id="ideas" class="page">
         <h1>💡 Ide Konten</h1>
 
@@ -793,63 +861,66 @@
 
       <div id="settings" class="page settings-centered">
         <h1>⚙️ Settings</h1>
-      <p style="margin-bottom: 1.75rem">
-        Konfigurasi perilaku app di sistem kamu.
-      </p>
+        <p style="margin-bottom: 1.75rem">
+          Konfigurasi perilaku app di sistem kamu.
+        </p>
 
-      <div class="settings-section">
-        <div class="settings-section-title">🖥️ Sistem</div>
+        <div class="settings-section">
+          <div class="settings-section-title">🖥️ Sistem</div>
 
-        <div class="settings-row">
-          <div class="settings-row-info">
-            <div class="settings-row-label">Auto-start saat laptop nyala</div>
-            <div class="settings-row-desc">
-              ArtAssist otomatis berjalan di background saat Windows start
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Auto-start saat laptop nyala</div>
+              <div class="settings-row-desc">
+                ArtAssist otomatis berjalan di background saat Windows start
+              </div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-autostart" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Notifikasi pengingat jadwal</div>
+              <div class="settings-row-desc">
+                Notif sistem muncul tepat saat waktu posting tiba sesuai
+                jadwalmu
+              </div>
+            </div>
+            <span class="settings-badge-on">• Selalu aktif</span>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">💡 Cara kerja notifikasi</div>
+          <div class="settings-info-list">
+            <div class="settings-info-item">
+              ⏰ Notif dikirim tepat pada jam posting yang kamu set di halaman
+              Jadwal
+            </div>
+            <div class="settings-info-item">
+              📱 App harus berjalan (boleh di background / minimize) agar notif
+              bisa muncul
+            </div>
+            <div class="settings-info-item">
+              🖱️ Klik notifikasi untuk langsung fokus ke jendela ArtAssist
+            </div>
+            <div class="settings-info-item">
+              🔄 Jadwal dicek setiap 30 detik — notif tidak akan telat lebih
+              dari 30 detik
             </div>
           </div>
-          <label class="toggle-switch">
-            <input type="checkbox" id="toggle-autostart" />
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-row-info">
-            <div class="settings-row-label">Notifikasi pengingat jadwal</div>
-            <div class="settings-row-desc">
-              Notif sistem muncul tepat saat waktu posting tiba sesuai jadwalmu
-            </div>
-          </div>
-          <span class="settings-badge-on">• Selalu aktif</span>
         </div>
       </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">💡 Cara kerja notifikasi</div>
-        <div class="settings-info-list">
-          <div class="settings-info-item">
-            ⏰ Notif dikirim tepat pada jam posting yang kamu set di halaman
-            Jadwal
-          </div>
-          <div class="settings-info-item">
-            📱 App harus berjalan (boleh di background / minimize) agar notif
-            bisa muncul
-          </div>
-          <div class="settings-info-item">
-            🖱️ Klik notifikasi untuk langsung fokus ke jendela ArtAssist
-          </div>
-          <div class="settings-info-item">
-            🔄 Jadwal dicek setiap 30 detik — notif tidak akan telat lebih dari
-            30 detik
-          </div>
-        </div>
-      </div>
-
-    </div><!-- end .content -->
+      <!-- end #settings page -->
+    </div>
+    <!-- end .content -->
 
     <script src="redditFetch.js"></script>
-
     <script src="renderer.js"></script>
+    <script src="chat.js"></script>
     <div
       id="toast"
       style="

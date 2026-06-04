@@ -16,9 +16,7 @@ navButtons.forEach((btn) => {
 window.addEventListener('DOMContentLoaded', () => {
   getTrendContext()
     .then(() => console.log('Tren berhasil dimuat.'))
-    .catch(() =>
-      console.warn('Gagal load tren, pakai pengetahuan Ollama saja.'),
-    );
+    .catch(() => console.warn('Gagal load tren, pakai pengetahuan AI saja.'));
 });
 
 // =====================
@@ -220,11 +218,7 @@ function cleanOllamaJSON(raw) {
 // =====================
 let lastTrendRecommendations = null;
 
-// Guard: trendDataCache is defined in redditFetch.js.
-// This prevents a ReferenceError if that file hasn't loaded yet.
-if (typeof trendDataCache === 'undefined') {
-  var trendDataCache = null;
-}
+// trendDataCache is defined in redditFetch.js.
 
 document.addEventListener('DOMContentLoaded', () => {
   const trendMonth = document.getElementById('trend-month');
@@ -286,7 +280,7 @@ async function generateTrendAnalysis() {
   }
 
   cardsEl.innerHTML =
-    '<div style="color:#a78bfa; font-size:13px; grid-column:span 3">🤖 Ollama sedang menganalisis...</div>';
+    '<div style="color:#a78bfa; font-size:13px; grid-column:span 3">🤖 Groq AI sedang menganalisis...</div>';
 
   const prompt = `Kamu adalah social media strategist ahli untuk komunitas illustrator anime/manga, khususnya cute boy character art (shota aesthetic, school life, cozy themes).
 
@@ -405,7 +399,7 @@ Balas HANYA dengan JSON berikut, tanpa teks di luar JSON:
   } catch (err) {
     cardsEl.innerHTML = `
       <div style="color:#ff6b6b; grid-column:span 3; font-size:13px">
-        ❌ Gagal analisis. Pastikan Ollama berjalan.<br>
+        ❌ Gagal analisis. Cek API key Groq atau koneksi internet.<br>
         <span style="color:#555; font-size:11px">${err.message}</span>
       </div>`;
   }
@@ -509,31 +503,67 @@ function showToast(msg, duration = 3000) {
   setTimeout(() => (toast.style.display = 'none'), duration);
 }
 // =====================
-// OLLAMA
+// GROQ API
 // =====================
+let GROQ_API_KEY = '';
+const GROQ_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+
+// Load key saat app siap
+window.addEventListener('DOMContentLoaded', async () => {
+  GROQ_API_KEY = await ipcRenderer.invoke('get-groq-key');
+});
+
 async function askOllama(prompt) {
-  const response = await fetch('http://localhost:11434/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'gemma4:e4b', prompt, stream: false }),
-  });
+  const response = await fetch(
+    'https://api.groq.com/openai/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        stream: false,
+      }),
+    },
+  );
   const data = await response.json();
-  return data.response;
+  if (data.error) throw new Error(data.error.message);
+  return data.choices[0].message.content;
 }
 
 async function askOllamaWithImage(prompt, base64Image) {
-  const response = await fetch('http://localhost:11434/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'gemma4:e4b',
-      prompt,
-      images: [base64Image],
-      stream: false,
-    }),
-  });
+  const response = await fetch(
+    'https://api.groq.com/openai/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              {
+                type: 'image_url',
+                image_url: { url: `data:image/jpeg;base64,${base64Image}` },
+              },
+            ],
+          },
+        ],
+        stream: false,
+      }),
+    },
+  );
   const data = await response.json();
-  return data.response;
+  if (data.error) throw new Error(data.error.message);
+  return data.choices[0].message.content;
 }
 
 // =====================
@@ -598,7 +628,7 @@ Format: nomor. judul ide — cara eksekusinya singkat (1-2 kalimat). Langsung ke
     resultBox.textContent = result;
   } catch (err) {
     resultBox.textContent =
-      '❌ Gagal konek ke Ollama. Pastikan Ollama sedang berjalan.';
+      '❌ Gagal konek ke Groq. Cek API key atau koneksi internet.';
   }
 }
 
@@ -676,7 +706,7 @@ Bahasa Indonesia yang natural dan gaul.`;
     resultBox.textContent = result;
   } catch (err) {
     resultBox.textContent =
-      '❌ Gagal konek ke Ollama. Pastikan Ollama sedang berjalan.';
+      '❌ Gagal konek ke Groq. Cek API key atau koneksi internet.';
   }
 }
 
@@ -792,7 +822,7 @@ Tulis hashtag langsung tanpa penjelasan. Gunakan bahasa Inggris dan Jepang (roma
     document.getElementById('btn-copy-hash').style.display = 'inline-block';
   } catch (err) {
     resultBox.textContent =
-      '❌ Gagal konek ke Ollama. Pastikan Ollama sedang berjalan.';
+      '❌ Gagal konek ke Groq. Cek API key atau koneksi internet.';
   }
 }
 
@@ -1091,7 +1121,7 @@ type hanya boleh: artwork, wip, noncreative, carousel, speedpaint`;
       const cleaned = cleanOllamaJSON(raw);
       suggestion = JSON.parse(cleaned);
     } catch (e) {
-      throw new Error('Format JSON tidak valid dari Ollama');
+      throw new Error('Format JSON tidak valid dari Groq');
     }
 
     if (!scheduleData[monthKey]) scheduleData[monthKey] = {};
@@ -1243,7 +1273,7 @@ Bahasa Indonesia yang natural. Fokus untuk komunitas illustrator anime.`;
     });
   } catch (err) {
     slidesEl.innerHTML =
-      '<div style="color:#ff6b6b">❌ Gagal konek ke Ollama.</div>';
+      '<div style="color:#ff6b6b">❌ Gagal konek ke Groq. Cek API key.</div>';
   }
 }
 
@@ -1543,7 +1573,8 @@ Format setiap tips:
     const result = await askOllama(prompt);
     resultEl.textContent = result;
   } catch (err) {
-    resultEl.textContent = '❌ Gagal konek ke Ollama. Pastikan sudah berjalan.';
+    resultEl.textContent =
+      '❌ Gagal konek ke Groq. Cek API key atau koneksi internet.';
   }
 }
 
@@ -1569,4 +1600,206 @@ document.addEventListener('DOMContentLoaded', async () => {
     toggle.checked = await getAutoStart();
     toggle.addEventListener('change', (e) => setAutoStart(e.target.checked));
   }
+});
+// =====================
+// CHAT AI
+// Tambahkan ke bagian bawah renderer.js
+// (atau buat file chat.js dan include di index.html)
+// =====================
+
+const CHAT_SYSTEM_PROMPT = `Kamu adalah ArtAssist AI, asisten pribadi untuk illustrator anime/manga Indonesia.
+
+Kamu ahli di:
+- Strategi konten & social media (Instagram, TikTok, Twitter/X)
+- Tips menggambar dan improvement skill
+- Pricing & manajemen komisi
+- Branding personal sebagai artist
+- Analisis tren anime & art community
+
+Gaya komunikasi:
+- Santai, friendly, seperti teman sesama seniman
+- Bahasa Indonesia yang natural (boleh mix sedikit English kalau relevan)
+- Jawaban konkret dan actionable, bukan teori kosong
+- Pakai emoji secukupnya biar tidak kaku
+- Kalau ada tips, beri langkah spesifik yang bisa dilakukan hari ini`;
+
+let chatHistory = [];
+let chatIsTyping = false;
+
+function appendChatBubble(role, content) {
+  const messagesEl = document.getElementById('chat-messages');
+  if (!messagesEl) return null;
+
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble ${role}`;
+
+  if (role === 'ai') {
+    bubble.innerHTML = `
+      <div class="chat-bubble-avatar">✦</div>
+      <div class="chat-bubble-content">${content}</div>`;
+  } else {
+    bubble.innerHTML = `<div class="chat-bubble-content">${content}</div>`;
+  }
+
+  messagesEl.appendChild(bubble);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return bubble;
+}
+
+function showTypingIndicator() {
+  const messagesEl = document.getElementById('chat-messages');
+  if (!messagesEl) return null;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble ai typing';
+  bubble.id = 'chat-typing-indicator';
+  bubble.innerHTML = `
+    <div class="chat-bubble-avatar">✦</div>
+    <div class="chat-bubble-content">
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>`;
+  messagesEl.appendChild(bubble);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return bubble;
+}
+
+function removeTypingIndicator() {
+  const el = document.getElementById('chat-typing-indicator');
+  if (el) el.remove();
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('chat-send-btn');
+  if (!input || chatIsTyping) return;
+
+  const message = input.value.trim();
+  if (!message) return;
+
+  // Reset input
+  input.value = '';
+  input.style.height = 'auto';
+
+  // Sembunyikan suggestion chips setelah pertama kali kirim
+  const suggestions = document.getElementById('chat-suggestions');
+  if (suggestions) suggestions.style.display = 'none';
+
+  // Tampilkan bubble user
+  appendChatBubble('user', escapeHtml(message));
+
+  // Tambah ke history
+  chatHistory.push({ role: 'user', content: message });
+
+  // Lock UI
+  chatIsTyping = true;
+  sendBtn.disabled = true;
+  showTypingIndicator();
+
+  try {
+    const response = await fetch(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          messages: [
+            { role: 'system', content: CHAT_SYSTEM_PROMPT },
+            ...chatHistory,
+          ],
+          max_tokens: 1024,
+          stream: false,
+        }),
+      },
+    );
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const reply = data.choices[0].message.content;
+    chatHistory.push({ role: 'assistant', content: reply });
+
+    removeTypingIndicator();
+    appendChatBubble('ai', formatChatReply(reply));
+  } catch (err) {
+    removeTypingIndicator();
+    appendChatBubble(
+      'ai',
+      '❌ Gagal konek ke Groq. Cek API key atau koneksi internet.',
+    );
+  } finally {
+    chatIsTyping = false;
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+
+function handleChatKey(event) {
+  // Enter = kirim, Shift+Enter = baris baru
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendChatMessage();
+  }
+}
+
+function autoResizeInput(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function useSuggestion(btn) {
+  const input = document.getElementById('chat-input');
+  if (input) {
+    input.value = btn.textContent.replace(/^[^\w\s]*\s*/, ''); // hapus emoji di depan
+    input.focus();
+    sendChatMessage();
+  }
+}
+
+function clearChat() {
+  chatHistory = [];
+  const messagesEl = document.getElementById('chat-messages');
+  if (!messagesEl) return;
+  messagesEl.innerHTML = `
+    <div class="chat-bubble ai">
+      <div class="chat-bubble-avatar">✦</div>
+      <div class="chat-bubble-content">
+        Chat direset. Ada yang bisa aku bantu? 😊
+      </div>
+    </div>`;
+
+  // Tampilkan suggestion lagi
+  const suggestions = document.getElementById('chat-suggestions');
+  if (suggestions) suggestions.style.display = 'flex';
+}
+
+// Format reply: bold **text**, newline jadi <br>
+function formatChatReply(text) {
+  return escapeHtml(text)
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Render dashboard saat nav chat diklik (sama seperti halaman lain)
+document.querySelectorAll('.nav').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.page === 'chat') {
+      setTimeout(() => {
+        document.getElementById('chat-input')?.focus();
+      }, 50);
+    }
+  });
 });
