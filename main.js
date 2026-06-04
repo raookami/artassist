@@ -1,6 +1,17 @@
-require('dotenv').config();
+// =====================
+// LOAD ENV (dev & packaged)
+// =====================
+const path = require('path');
+const dotenv = require('dotenv');
+const isPacked = !process.defaultApp;
+const envPath = isPacked
+  ? path.join(process.resourcesPath, '.env')
+  : path.join(__dirname, '.env');
+dotenv.config({ path: envPath });
+
 const { supabase } = require('./supabase');
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const {
   app,
   BrowserWindow,
@@ -13,7 +24,6 @@ const {
 } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const https = require('https');
-const path = require('path');
 const fs = require('fs');
 const { spawn, exec } = require('child_process');
 
@@ -22,10 +32,8 @@ const { spawn, exec } = require('child_process');
 // =====================
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
-  // Ada instance lain yang sudah jalan — langsung quit
   app.quit();
 } else {
-  // Kalau ada yang coba buka instance kedua, fokus ke window yang sudah ada
   app.on('second-instance', () => {
     if (mainWindow) {
       if (!mainWindow.isVisible()) mainWindow.show();
@@ -38,7 +46,7 @@ let ollamaProcess = null;
 let mainWindow = null;
 let tray = null;
 let reminderInterval = null;
-const NOTIFIED_KEY_PREFIX = 'notified-'; // track notif yang sudah dikirim hari ini
+const NOTIFIED_KEY_PREFIX = 'notified-';
 
 // =====================
 // AUTO-START OLLAMA
@@ -89,9 +97,6 @@ function startOllama() {
 // BACA JADWAL DARI DISK
 // =====================
 function getScheduleData() {
-  // Electron simpan localStorage di file leveldb, tidak bisa dibaca langsung.
-  // Renderer akan kirim data via IPC setiap kali jadwal berubah.
-  // Main process simpan salinannya di file JSON sederhana.
   const dataPath = path.join(app.getPath('userData'), 'schedule-cache.json');
   try {
     if (fs.existsSync(dataPath)) {
@@ -118,12 +123,22 @@ const TYPE_LABELS = {
 // PUTAR SUARA NOTIFIKASI
 // =====================
 function playNotificationSound() {
+  const basePath = app.isPackaged
+    ? path.join(process.resourcesPath, 'assets')
+    : path.join(__dirname, 'assets');
+
+  console.log('[Sound] basePath:', basePath);
+
   const candidates = [
-    path.join(__dirname, 'assets', 'notification.wav'),
-    path.join(__dirname, 'assets', 'notification.mp3'),
+    path.join(basePath, 'notification.wav'),
+    path.join(basePath, 'notification.mp3'),
   ];
 
+  console.log('[Sound] Candidates:', candidates);
+
   const assetPath = candidates.find((p) => fs.existsSync(p));
+
+  console.log('[Sound] assetPath:', assetPath);
 
   if (!assetPath) {
     console.warn('[Sound] File tidak ditemukan di assets/');
@@ -132,7 +147,6 @@ function playNotificationSound() {
 
   console.log('[Sound] Playing:', assetPath);
 
-  // Cara 1: PowerShell — paling reliable di Windows, tidak butuh window visible
   const psCmd =
     `powershell -NoProfile -WindowStyle Hidden -Command "` +
     `$player = New-Object System.Media.SoundPlayer '${assetPath.replace(/'/g, "''")}'; ` +
@@ -141,7 +155,6 @@ function playNotificationSound() {
   exec(psCmd, (err) => {
     if (err) {
       console.warn('[Sound] PowerShell gagal:', err.message);
-      // Cara 2: fallback ke renderer jika window ada dan visible
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('play-sound', assetPath);
         console.log('[Sound] Fallback ke renderer');
@@ -155,9 +168,8 @@ function playNotificationSound() {
 // =====================
 // CEK & KIRIM NOTIFIKASI
 // =====================
-// notifiedToday: Set berisi key "dateStr|time|platform" yang sudah dinotif hari ini
 const notifiedToday = new Set();
-let lastNotifDate = ''; // reset notifiedToday tiap hari baru
+let lastNotifDate = '';
 
 function checkAndNotify() {
   const now = new Date();
@@ -167,7 +179,6 @@ function checkAndNotify() {
 
   console.log(`[Check] ${todayStr} ${currentTime}`);
 
-  // Reset set notifikasi tiap hari baru
   if (lastNotifDate !== todayStr) {
     notifiedToday.clear();
     lastNotifDate = todayStr;
@@ -183,7 +194,6 @@ function checkAndNotify() {
     );
   }
 
-  // Cek apakah file cache ada
   const dataPath = path.join(app.getPath('userData'), 'schedule-cache.json');
   console.log(`[Check] Cache path: ${dataPath}`);
   console.log(`[Check] Cache exists: ${fs.existsSync(dataPath)}`);
@@ -195,7 +205,6 @@ function checkAndNotify() {
       `[Check] Comparing post.time="${post.time}" vs currentTime="${currentTime}"`,
     );
 
-    // Kirim notif kalau waktunya cocok dan belum pernah dinotif
     if (post.time === currentTime && !notifiedToday.has(key)) {
       notifiedToday.add(key);
 
@@ -213,7 +222,6 @@ function checkAndNotify() {
           silent: false,
         });
 
-        // Klik notif → buka / fokus ke app
         notif.on('click', () => {
           if (mainWindow) {
             if (mainWindow.isMinimized()) mainWindow.restore();
@@ -226,7 +234,6 @@ function checkAndNotify() {
           `[Notif] SENT: ${post.platform} — ${typeLabel} jam ${post.time}`,
         );
 
-        // Putar suara notifikasi
         playNotificationSound();
       }
     }
@@ -238,7 +245,6 @@ function checkAndNotify() {
 // =====================
 function startReminderLoop() {
   if (reminderInterval) return;
-  // Cek setiap 30 detik supaya tidak telat > 30 detik dari waktu yang dijadwalkan
   reminderInterval = setInterval(checkAndNotify, 30 * 1000);
   console.log('Reminder loop started.');
 }
@@ -298,7 +304,7 @@ function createWindow() {
 // SYSTEM TRAY
 // =====================
 function createTray() {
-  if (tray && !tray.isDestroyed()) return; // sudah ada dan masih hidup, skip
+  if (tray && !tray.isDestroyed()) return;
   const iconPath = path.join(__dirname, 'assets', 'icon.ico');
   const trayIcon = nativeImage
     .createFromPath(iconPath)
@@ -334,7 +340,6 @@ function createTray() {
 
   tray.setContextMenu(contextMenu);
 
-  // Klik icon tray → buka/fokus window
   tray.on('click', () => {
     if (mainWindow) {
       if (mainWindow.isVisible()) {
@@ -351,9 +356,7 @@ function createTray() {
 // IPC — DARI RENDERER
 // =====================
 
-// Renderer kirim data jadwal terbaru setiap kali ada perubahan
 ipcMain.on('schedule-updated', async (event, scheduleJSON) => {
-  // Simpan lokal seperti biasa
   const dataPath = path.join(app.getPath('userData'), 'schedule-cache.json');
   try {
     fs.writeFileSync(dataPath, scheduleJSON, 'utf-8');
@@ -362,7 +365,6 @@ ipcMain.on('schedule-updated', async (event, scheduleJSON) => {
     console.warn('Gagal simpan schedule cache lokal:', e.message);
   }
 
-  // Sync ke Supabase
   try {
     const allData = JSON.parse(scheduleJSON);
     for (const monthKey of Object.keys(allData)) {
@@ -387,12 +389,10 @@ ipcMain.on('schedule-updated', async (event, scheduleJSON) => {
   }
 });
 
-// Renderer tanya status auto-start
 ipcMain.handle('get-autostart', () => {
   return app.getLoginItemSettings().openAtLogin;
 });
 
-// Renderer minta toggle auto-start
 ipcMain.handle('set-autostart', (event, enable) => {
   app.setLoginItemSettings({
     openAtLogin: enable,
@@ -446,7 +446,6 @@ ipcMain.handle('fetch-reddit', async (event, url) => {
   return fetchWithRedirect(url, options);
 });
 
-// Renderer minta Supabase config
 ipcMain.handle('get-supabase-config', () => {
   return {
     url: process.env.SUPABASE_URL,
@@ -454,7 +453,6 @@ ipcMain.handle('get-supabase-config', () => {
   };
 });
 
-// Renderer minta API key secara aman
 ipcMain.handle('get-groq-key', () => {
   return process.env.GROQ_API_KEY;
 });
@@ -463,7 +461,6 @@ ipcMain.handle('get-groq-key', () => {
 // AUTO UPDATER
 // =====================
 function setupAutoUpdater() {
-  // Cek update diam-diam di background
   autoUpdater.checkForUpdatesAndNotify();
 
   autoUpdater.on('update-available', () => {
@@ -477,7 +474,6 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on('update-downloaded', () => {
-    // Tampilkan notif + opsi install sekarang
     if (Notification.isSupported()) {
       const notif = new Notification({
         title: '✅ Update siap dipasang!',
@@ -489,9 +485,8 @@ function setupAutoUpdater() {
       notif.show();
     }
 
-    // Juga tampilkan dialog di window kalau sedang buka
     if (mainWindow) {
-      mainWindow.webContents.send('update-downloaded'); // kirim sinyal ke renderer
+      mainWindow.webContents.send('update-downloaded');
     }
   });
 
@@ -500,10 +495,10 @@ function setupAutoUpdater() {
   });
 }
 
-// Test suara dari renderer (tombol debug)
 ipcMain.on('test-sound', () => {
   playNotificationSound();
 });
+
 ipcMain.on('test-notif-debug', () => {
   console.log(
     '[Debug] Notification.isSupported():',
@@ -526,9 +521,8 @@ ipcMain.on('install-update', () => {
 // =====================
 app.commandLine.appendSwitch('ignore-certificate-errors');
 app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
-// Izinkan autoplay audio tanpa user gesture (wajib untuk notifikasi suara)
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
-app.setAppUserModelId('com.artassist.app'); // ← tambahkan ini
+app.setAppUserModelId('com.artassist.app');
 
 app.whenReady().then(() => {
   startOllama();
@@ -538,11 +532,10 @@ app.whenReady().then(() => {
     createWindow();
     startReminderLoop();
     checkAndNotify();
-    setupAutoUpdater(); // cek update setelah window siap
+    setupAutoUpdater();
   }, 2000);
 
   app.on('activate', () => {
-    // Klik ikon taskbar → tampilkan window yang sudah ada, jangan buat baru
     if (mainWindow) {
       mainWindow.show();
       mainWindow.focus();
@@ -554,5 +547,4 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   // Jangan quit — biarkan app tetap jalan di tray
-  // Quit hanya lewat menu tray "Keluar"
 });
