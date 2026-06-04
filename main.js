@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { supabase } = require('./supabase');
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const {
   app,
@@ -351,13 +352,38 @@ function createTray() {
 // =====================
 
 // Renderer kirim data jadwal terbaru setiap kali ada perubahan
-ipcMain.on('schedule-updated', (event, scheduleJSON) => {
+ipcMain.on('schedule-updated', async (event, scheduleJSON) => {
+  // Simpan lokal seperti biasa
   const dataPath = path.join(app.getPath('userData'), 'schedule-cache.json');
   try {
     fs.writeFileSync(dataPath, scheduleJSON, 'utf-8');
-    console.log('Schedule cache updated.');
+    console.log('Schedule cache updated (local).');
   } catch (e) {
-    console.warn('Gagal simpan schedule cache:', e.message);
+    console.warn('Gagal simpan schedule cache lokal:', e.message);
+  }
+
+  // Sync ke Supabase
+  try {
+    const allData = JSON.parse(scheduleJSON);
+    for (const monthKey of Object.keys(allData)) {
+      const monthData = allData[monthKey];
+      for (const dateKey of Object.keys(monthData)) {
+        const posts = monthData[dateKey];
+        await supabase.from('schedule').upsert(
+          {
+            user_id: 'raookami',
+            month_key: monthKey,
+            date_key: dateKey,
+            posts: posts,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id,month_key,date_key' },
+        );
+      }
+    }
+    console.log('Schedule synced to Supabase.');
+  } catch (e) {
+    console.warn('Gagal sync ke Supabase:', e.message);
   }
 });
 
@@ -418,6 +444,14 @@ ipcMain.handle('fetch-reddit', async (event, url) => {
     rejectUnauthorized: false,
   };
   return fetchWithRedirect(url, options);
+});
+
+// Renderer minta Supabase config
+ipcMain.handle('get-supabase-config', () => {
+  return {
+    url: process.env.SUPABASE_URL,
+    key: process.env.SUPABASE_KEY,
+  };
 });
 
 // Renderer minta API key secara aman

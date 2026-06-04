@@ -39,6 +39,7 @@
     "snoowrap": "^1.23.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.107.0",
     "dotenv": "^17.4.2",
     "electron-updater": "^6.3.9"
   }

@@ -1,5 +1,42 @@
 // Navigasi sidebar
 const { ipcRenderer } = require('electron');
+
+// =====================
+// SUPABASE CLIENT (renderer)
+// =====================
+const { createClient } = require('@supabase/supabase-js');
+let supabaseClient = null;
+
+async function initSupabase() {
+  const config = await ipcRenderer.invoke('get-supabase-config');
+  supabaseClient = createClient(config.url, config.key);
+}
+
+// Sync jadwal dari Supabase ke localStorage saat app dibuka
+async function syncFromSupabase() {
+  if (!supabaseClient) return;
+  try {
+    const { data, error } = await supabaseClient
+      .from('schedule')
+      .select('*')
+      .eq('user_id', 'raookami');
+    if (error || !data) return;
+
+    const merged = JSON.parse(
+      localStorage.getItem('artassist-schedule-v2') || '{}',
+    );
+    data.forEach((row) => {
+      if (!merged[row.month_key]) merged[row.month_key] = {};
+      merged[row.month_key][row.date_key] = row.posts;
+    });
+    localStorage.setItem('artassist-schedule-v2', JSON.stringify(merged));
+    scheduleData = merged;
+    renderDashboard();
+    console.log('[Supabase] Jadwal berhasil di-sync.');
+  } catch (e) {
+    console.warn('[Supabase] Gagal sync:', e.message);
+  }
+}
 const navButtons = document.querySelectorAll('.nav');
 const pages = document.querySelectorAll('.page');
 
@@ -13,7 +50,9 @@ navButtons.forEach((btn) => {
 });
 
 // Pre-fetch tren saat app dibuka (background)
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  await initSupabase();
+  await syncFromSupabase();
   getTrendContext()
     .then(() => console.log('Tren berhasil dimuat.'))
     .catch(() => console.warn('Gagal load tren, pakai pengetahuan AI saja.'));
