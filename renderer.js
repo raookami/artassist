@@ -1,14 +1,14 @@
 // Navigasi sidebar
-const { ipcRenderer } = require('electron');
+const { ipcRenderer } = require("electron");
 
 // =====================
 // SUPABASE CLIENT (renderer)
 // =====================
-const { createClient } = require('@supabase/supabase-js');
+const { createClient } = require("@supabase/supabase-js");
 let supabaseClient = null;
 
 async function initSupabase() {
-  const config = await ipcRenderer.invoke('get-supabase-config');
+  const config = await ipcRenderer.invoke("get-supabase-config");
   supabaseClient = createClient(config.url, config.key);
 }
 
@@ -17,70 +17,70 @@ async function syncFromSupabase() {
   if (!supabaseClient) return;
   try {
     const { data, error } = await supabaseClient
-      .from('schedule')
-      .select('*')
-      .eq('user_id', 'raookami');
+      .from("schedule")
+      .select("*")
+      .eq("user_id", "raookami");
     if (error || !data) return;
 
     const merged = JSON.parse(
-      localStorage.getItem('artassist-schedule-v2') || '{}',
+      localStorage.getItem("artassist-schedule-v2") || "{}",
     );
     data.forEach((row) => {
       if (!merged[row.month_key]) merged[row.month_key] = {};
       merged[row.month_key][row.date_key] = row.posts;
     });
-    localStorage.setItem('artassist-schedule-v2', JSON.stringify(merged));
+    localStorage.setItem("artassist-schedule-v2", JSON.stringify(merged));
     scheduleData = merged;
     renderDashboard();
-    console.log('[Supabase] Jadwal berhasil di-sync.');
+    console.log("[Supabase] Jadwal berhasil di-sync.");
   } catch (e) {
-    console.warn('[Supabase] Gagal sync:', e.message);
+    console.warn("[Supabase] Gagal sync:", e.message);
   }
 }
-const navButtons = document.querySelectorAll('.nav');
-const pages = document.querySelectorAll('.page');
+const navButtons = document.querySelectorAll(".nav");
+const pages = document.querySelectorAll(".page");
 
 navButtons.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    navButtons.forEach((b) => b.classList.remove('active'));
-    pages.forEach((p) => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.page).classList.add('active');
+  btn.addEventListener("click", () => {
+    navButtons.forEach((b) => b.classList.remove("active"));
+    pages.forEach((p) => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.page).classList.add("active");
   });
 });
 
 // Pre-fetch tren saat app dibuka (background)
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener("DOMContentLoaded", async () => {
   await initSupabase();
   await syncFromSupabase();
   getTrendContext()
-    .then(() => console.log('Tren berhasil dimuat.'))
-    .catch(() => console.warn('Gagal load tren, pakai pengetahuan AI saja.'));
+    .then(() => console.log("Tren berhasil dimuat."))
+    .catch(() => console.warn("Gagal load tren, pakai pengetahuan AI saja."));
 });
 
 // =====================
 // DASHBOARD
 // =====================
 const TYPE_COLORS = {
-  artwork: '#a78bfa',
-  wip: '#f59e0b',
-  noncreative: '#10b981',
-  carousel: '#3b82f6',
-  speedpaint: '#f59e0b',
+  artwork: "#a78bfa",
+  wip: "#f59e0b",
+  noncreative: "#10b981",
+  carousel: "#3b82f6",
+  speedpaint: "#f59e0b",
 };
 
 const TYPE_LABELS = {
-  artwork: '🖼️ Karya Baru',
-  wip: '📸 WIP / BTS',
-  noncreative: '✍️ Teks / Meme',
-  carousel: '📖 Carousel',
-  speedpaint: '🎬 Speed Draw',
+  artwork: "🖼️ Karya Baru",
+  wip: "📸 WIP / BTS",
+  noncreative: "✍️ Teks / Meme",
+  carousel: "📖 Carousel",
+  speedpaint: "🎬 Speed Draw",
 };
 
 function renderDashboard() {
   const now = new Date();
-  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const daysInMonth = new Date(
     now.getFullYear(),
     now.getMonth() + 1,
@@ -89,7 +89,7 @@ function renderDashboard() {
   const daysLeft = daysInMonth - now.getDate();
 
   const allData = JSON.parse(
-    localStorage.getItem('artassist-schedule-v2') || '{}',
+    localStorage.getItem("artassist-schedule-v2") || "{}",
   );
   const monthPosts = allData[monthKey] || {};
 
@@ -101,38 +101,38 @@ function renderDashboard() {
   });
 
   const bulanNames = [
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember',
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
   ];
-  const elMonth = document.getElementById('dash-month-label');
+  const elMonth = document.getElementById("dash-month-label");
   if (elMonth)
     elMonth.textContent = `${bulanNames[now.getMonth()]} ${now.getFullYear()}`;
 
   const totalPosts = allPosts.length;
-  const artworkCount = allPosts.filter((p) => p.type === 'artwork').length;
+  const artworkCount = allPosts.filter((p) => p.type === "artwork").length;
 
   const el = (id) => document.getElementById(id);
-  if (el('dash-total-posts')) el('dash-total-posts').textContent = totalPosts;
-  if (el('dash-artwork-count'))
-    el('dash-artwork-count').textContent = artworkCount;
-  if (el('dash-days-left')) el('dash-days-left').textContent = daysLeft;
+  if (el("dash-total-posts")) el("dash-total-posts").textContent = totalPosts;
+  if (el("dash-artwork-count"))
+    el("dash-artwork-count").textContent = artworkCount;
+  if (el("dash-days-left")) el("dash-days-left").textContent = daysLeft;
 
   const platformCount = {};
   allPosts.forEach((p) => {
     platformCount[p.platform] = (platformCount[p.platform] || 0) + 1;
   });
   const maxPlat = Math.max(...Object.values(platformCount), 1);
-  const platEl = el('dash-platform-breakdown');
+  const platEl = el("dash-platform-breakdown");
   if (platEl) {
     platEl.innerHTML = Object.keys(platformCount).length
       ? Object.entries(platformCount)
@@ -142,12 +142,12 @@ function renderDashboard() {
         <div class="dash-platform-row">
           <div class="dash-platform-label">${plat}</div>
           <div class="dash-platform-bar-wrap">
-            <div class="dash-platform-bar" style="width:${(count / maxPlat) * 100}%; background:${PLATFORM_COLORS[plat] || '#a78bfa'}"></div>
+            <div class="dash-platform-bar" style="width:${(count / maxPlat) * 100}%; background:${PLATFORM_COLORS[plat] || "#a78bfa"}"></div>
           </div>
           <div class="dash-platform-count">${count}</div>
         </div>`,
           )
-          .join('')
+          .join("")
       : '<div style="color:#555; font-size:12px">Belum ada jadwal bulan ini</div>';
   }
 
@@ -156,20 +156,20 @@ function renderDashboard() {
     .sort((a, b) => (a.dateStr + a.time).localeCompare(b.dateStr + b.time))
     .slice(0, 5);
 
-  const upcomingEl = el('dash-upcoming');
+  const upcomingEl = el("dash-upcoming");
   if (upcomingEl) {
     upcomingEl.innerHTML = upcoming.length
       ? upcoming
           .map((p) => {
-            const d = new Date(p.dateStr + 'T00:00:00');
+            const d = new Date(p.dateStr + "T00:00:00");
             const label = `${d.getDate()} ${bulanNames[d.getMonth()]}`;
             return `<div class="dash-upcoming-item">
             <div class="dash-upcoming-date">📅 ${label}</div>
-            <div class="dash-upcoming-platform" style="color:${PLATFORM_COLORS[p.platform] || '#aaa'}">${p.platform}</div>
-            <div class="dash-upcoming-type">${TYPE_LABELS[p.type] || p.type}${p.note ? ` — ${p.note}` : ''}</div>
+            <div class="dash-upcoming-platform" style="color:${PLATFORM_COLORS[p.platform] || "#aaa"}">${p.platform}</div>
+            <div class="dash-upcoming-type">${TYPE_LABELS[p.type] || p.type}${p.note ? ` — ${p.note}` : ""}</div>
           </div>`;
           })
-          .join('')
+          .join("")
       : '<div style="color:#555; font-size:12px">Tidak ada post terjadwal ke depan</div>';
   }
 
@@ -177,7 +177,7 @@ function renderDashboard() {
   allPosts.forEach((p) => {
     typeCount[p.type] = (typeCount[p.type] || 0) + 1;
   });
-  const typeEl = el('dash-type-breakdown');
+  const typeEl = el("dash-type-breakdown");
   if (typeEl) {
     typeEl.innerHTML = Object.keys(typeCount).length
       ? Object.entries(typeCount)
@@ -185,23 +185,23 @@ function renderDashboard() {
           .map(
             ([type, count]) => `
         <div class="dash-type-row">
-          <span><span class="dash-type-dot" style="background:${TYPE_COLORS[type] || '#aaa'}"></span>${TYPE_LABELS[type] || type}</span>
+          <span><span class="dash-type-dot" style="background:${TYPE_COLORS[type] || "#aaa"}"></span>${TYPE_LABELS[type] || type}</span>
           <span style="color:#555">${count}x</span>
         </div>`,
           )
-          .join('')
+          .join("")
       : '<div style="color:#555; font-size:12px">Belum ada data</div>';
   }
 
-  const reminderEl = el('dash-reminder');
+  const reminderEl = el("dash-reminder");
   if (reminderEl) {
     const reminders = [];
     if (totalPosts === 0)
       reminders.push(
-        '⚠️ Belum ada jadwal bulan ini. Coba fitur <b>Auto-isi</b> di halaman Jadwal.',
+        "⚠️ Belum ada jadwal bulan ini. Coba fitur <b>Auto-isi</b> di halaman Jadwal.",
       );
     if (totalPosts > 0 && upcoming.length === 0)
-      reminders.push('✅ Semua post bulan ini sudah lewat!');
+      reminders.push("✅ Semua post bulan ini sudah lewat!");
     if (upcoming.length > 0)
       reminders.push(
         `🔜 Post berikutnya: <b>${upcoming[0].platform}</b> — ${TYPE_LABELS[upcoming[0].type] || upcoming[0].type}`,
@@ -215,17 +215,17 @@ function renderDashboard() {
         `⏰ Bulan ini hampir habis (<b>${daysLeft} hari lagi</b>). Siapkan konten bulan depan!`,
       );
     reminderEl.innerHTML =
-      reminders.join('<br>') || '<span style="color:#555">Semua oke!</span>';
+      reminders.join("<br>") || '<span style="color:#555">Semua oke!</span>';
   }
 }
 
-document.querySelectorAll('.nav').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    if (btn.dataset.page === 'dashboard') renderDashboard();
+document.querySelectorAll(".nav").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (btn.dataset.page === "dashboard") renderDashboard();
   });
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   renderDashboard();
 });
 
@@ -234,22 +234,22 @@ document.addEventListener('DOMContentLoaded', () => {
 // =====================
 function extractField(text, field) {
   const match = text.match(new RegExp(`"${field}"\\s*:\\s*"([^"]+)"`));
-  return match ? match[1] : '—';
+  return match ? match[1] : "—";
 }
 
 function cleanOllamaJSON(raw) {
   const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('No JSON found');
+  if (!jsonMatch) throw new Error("No JSON found");
   return jsonMatch[0]
     .replace(/[\u0000-\u001F\u007F]/g, (char) => {
-      if (char === '\n') return ' ';
-      if (char === '\r') return '';
-      if (char === '\t') return ' ';
-      return '';
+      if (char === "\n") return " ";
+      if (char === "\r") return "";
+      if (char === "\t") return " ";
+      return "";
     })
-    .replace(/\n/g, ' ')
-    .replace(/\r/g, '')
-    .replace(/\t/g, ' ');
+    .replace(/\n/g, " ")
+    .replace(/\r/g, "")
+    .replace(/\t/g, " ");
 }
 
 // =====================
@@ -259,63 +259,63 @@ let lastTrendRecommendations = null;
 
 // trendDataCache is defined in redditFetch.js.
 
-document.addEventListener('DOMContentLoaded', () => {
-  const trendMonth = document.getElementById('trend-month');
+document.addEventListener("DOMContentLoaded", () => {
+  const trendMonth = document.getElementById("trend-month");
   if (trendMonth) {
     const now = new Date();
-    trendMonth.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    trendMonth.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   }
 });
 
 async function generateTrendAnalysis() {
-  const platform = document.getElementById('trend-platform').value;
-  const focus = document.getElementById('trend-focus').value;
-  const month = document.getElementById('trend-month').value;
+  const platform = document.getElementById("trend-platform").value;
+  const focus = document.getElementById("trend-focus").value;
+  const month = document.getElementById("trend-month").value;
 
   const focusMap = {
-    theme: 'tema dan mood konten yang sedang populer di komunitas anime art',
-    format: 'format konten terbaik (reel, carousel, single post, thread)',
-    time: 'waktu dan hari posting yang paling optimal untuk engagement',
-    hashtag: 'tren hashtag anime art yang sedang naik',
-    full: 'analisis lengkap mencakup tema, format, waktu posting, dan hashtag',
+    theme: "tema dan mood konten yang sedang populer di komunitas anime art",
+    format: "format konten terbaik (reel, carousel, single post, thread)",
+    time: "waktu dan hari posting yang paling optimal untuk engagement",
+    hashtag: "tren hashtag anime art yang sedang naik",
+    full: "analisis lengkap mencakup tema, format, waktu posting, dan hashtag",
   };
 
   const bulanNames = [
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember',
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
   ];
-  const [y, m] = month.split('-').map(Number);
+  const [y, m] = month.split("-").map(Number);
   const bulanLabel = `${bulanNames[m - 1]} ${y}`;
 
-  const resultEl = document.getElementById('trend-result');
-  const detailEl = document.getElementById('trend-detail');
-  const cardsEl = document.getElementById('trend-cards');
-  const recEl = document.getElementById('trend-schedule-rec');
+  const resultEl = document.getElementById("trend-result");
+  const detailEl = document.getElementById("trend-detail");
+  const cardsEl = document.getElementById("trend-cards");
+  const recEl = document.getElementById("trend-schedule-rec");
 
-  resultEl.style.display = 'block';
+  resultEl.style.display = "block";
   cardsEl.innerHTML =
     '<div style="color:#a78bfa; font-size:13px; grid-column:span 3">⏳ Mengambil data tren dari internet...</div>';
-  detailEl.textContent = '';
-  recEl.innerHTML = '';
+  detailEl.textContent = "";
+  recEl.innerHTML = "";
 
-  let trendContext = '';
+  let trendContext = "";
   try {
     cardsEl.innerHTML =
       '<div style="color:#a78bfa; font-size:13px; grid-column:span 3">🌐 Mengambil data Reddit...</div>';
     trendContext = await getTrendContext();
   } catch (err) {
     trendContext =
-      'Data tren real-time tidak tersedia, gunakan pengetahuan umum.';
+      "Data tren real-time tidak tersedia, gunakan pengetahuan umum.";
   }
 
   cardsEl.innerHTML =
@@ -332,6 +332,8 @@ PENTING:
 - Sebutkan judul anime atau tema spesifik yang lagi populer berdasarkan data
 - Berikan rekomendasi yang actionable dan spesifik
 
+Buat rencana untuk 4 MINGGU PENUH (satu bulan), bukan cuma satu pola yang diulang. Tiap minggu harus punya sub-tema/fokus konten yang BERBEDA (misal: minggu 1 fokus perkenalan karakter, minggu 2 seasonal/event, minggu 3 tutorial/proses, minggu 4 konten interaktif/community), supaya tidak monoton walau hari postingnya sama tiap minggu.
+
 Balas HANYA dengan JSON berikut, tanpa teks di luar JSON:
 {
   "summary": {
@@ -342,10 +344,22 @@ Balas HANYA dengan JSON berikut, tanpa teks di luar JSON:
   },
   "detail": "analisis lengkap dalam bahasa Indonesia 4-6 paragraf pendek sebut anime atau tema spesifik dari data tren",
   "rekomendasi_jadwal": [
-    {"hari": "Senin", "konten": "jenis konten spesifik berdasarkan tren", "jam": "19:00", "alasan": "alasan singkat berdasarkan data"},
-    {"hari": "Rabu", "konten": "...", "jam": "...", "alasan": "..."},
-    {"hari": "Jumat", "konten": "...", "jam": "...", "alasan": "..."},
-    {"hari": "Sabtu", "konten": "...", "jam": "...", "alasan": "..."}
+    {"minggu": 1, "hari": "Senin", "konten": "jenis konten spesifik berdasarkan tren", "jam": "19:00", "alasan": "alasan singkat berdasarkan data"},
+    {"minggu": 1, "hari": "Rabu", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 1, "hari": "Jumat", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 1, "hari": "Sabtu", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 2, "hari": "Senin", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 2, "hari": "Rabu", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 2, "hari": "Jumat", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 2, "hari": "Sabtu", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 3, "hari": "Senin", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 3, "hari": "Rabu", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 3, "hari": "Jumat", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 3, "hari": "Sabtu", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 4, "hari": "Senin", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 4, "hari": "Rabu", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 4, "hari": "Jumat", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 4, "hari": "Sabtu", "konten": "...", "jam": "...", "alasan": "..."}
   ]
 }`;
 
@@ -356,34 +370,34 @@ Balas HANYA dengan JSON berikut, tanpa teks di luar JSON:
       const cleaned = cleanOllamaJSON(raw);
       data = JSON.parse(cleaned);
     } catch (parseErr) {
-      console.warn('JSON parse gagal, pakai fallback:', parseErr.message);
+      console.warn("JSON parse gagal, pakai fallback:", parseErr.message);
       data = {
         summary: {
-          tema_populer: extractField(raw, 'tema_populer'),
-          format_terbaik: extractField(raw, 'format_terbaik'),
-          waktu_optimal: extractField(raw, 'waktu_optimal'),
-          hashtag_naik: extractField(raw, 'hashtag_naik'),
+          tema_populer: extractField(raw, "tema_populer"),
+          format_terbaik: extractField(raw, "format_terbaik"),
+          waktu_optimal: extractField(raw, "waktu_optimal"),
+          hashtag_naik: extractField(raw, "hashtag_naik"),
         },
-        detail: extractField(raw, 'detail'),
+        detail: extractField(raw, "detail"),
         rekomendasi_jadwal: [],
       };
     }
 
     const cards = [
       {
-        icon: '🎨',
-        title: 'Tema Populer',
-        value: data.summary?.tema_populer || '—',
+        icon: "🎨",
+        title: "Tema Populer",
+        value: data.summary?.tema_populer || "—",
       },
       {
-        icon: '📱',
-        title: 'Format Terbaik',
-        value: data.summary?.format_terbaik || '—',
+        icon: "📱",
+        title: "Format Terbaik",
+        value: data.summary?.format_terbaik || "—",
       },
       {
-        icon: '⏰',
-        title: 'Waktu Optimal',
-        value: data.summary?.waktu_optimal || '—',
+        icon: "⏰",
+        title: "Waktu Optimal",
+        value: data.summary?.waktu_optimal || "—",
       },
     ];
     cardsEl.innerHTML = cards
@@ -395,7 +409,7 @@ Balas HANYA dengan JSON berikut, tanpa teks di luar JSON:
         <div class="trend-card-value">${c.value}</div>
       </div>`,
       )
-      .join('');
+      .join("");
 
     if (data.summary?.hashtag_naik) {
       cardsEl.innerHTML += `
@@ -417,24 +431,48 @@ Balas HANYA dengan JSON berikut, tanpa teks di luar JSON:
         </div>`;
     }
 
-    detailEl.textContent = data.detail || '—';
+    detailEl.textContent = data.detail || "—";
 
     const recs = data.rekomendasi_jadwal || [];
     lastTrendRecommendations = recs;
-    recEl.innerHTML = recs.length
-      ? recs
-          .map(
-            (r) => `
-        <div class="trend-rec-item">
-          <div class="trend-rec-day">📅 ${r.hari}</div>
-          <div class="trend-rec-content">
-            <b>${r.konten}</b> — ${r.jam}<br>
-            <span style="color:#666">${r.alasan}</span>
+
+    if (!recs.length) {
+      recEl.innerHTML =
+        '<div style="color:#555; font-size:12px">Tidak ada rekomendasi</div>';
+    } else {
+      // Kelompokkan per minggu (rec lama tanpa field "minggu" dianggap minggu 1)
+      const byWeek = {};
+      recs.forEach((r) => {
+        const wk = r.minggu || 1;
+        if (!byWeek[wk]) byWeek[wk] = [];
+        byWeek[wk].push(r);
+      });
+
+      recEl.innerHTML = Object.keys(byWeek)
+        .sort((a, b) => a - b)
+        .map((wk) => {
+          const items = byWeek[wk]
+            .map(
+              (r) => `
+          <div class="trend-rec-item">
+            <div class="trend-rec-day">📅 ${r.hari}</div>
+            <div class="trend-rec-content">
+              <b>${r.konten}</b> — ${r.jam}<br>
+              <span style="color:#666">${r.alasan}</span>
+            </div>
+          </div>`,
+            )
+            .join("");
+          return `
+        <div style="grid-column:span 3; margin-top:${wk === "1" ? "0" : "14px"}">
+          <div style="color:#a78bfa; font-size:12px; font-weight:600; margin-bottom:6px; letter-spacing:0.3px">
+            MINGGU ${wk}
           </div>
-        </div>`,
-          )
-          .join('')
-      : '<div style="color:#555; font-size:12px">Tidak ada rekomendasi</div>';
+        </div>
+        ${items}`;
+        })
+        .join("");
+    }
   } catch (err) {
     cardsEl.innerHTML = `
       <div style="color:#ff6b6b; grid-column:span 3; font-size:13px">
@@ -446,17 +484,17 @@ Balas HANYA dengan JSON berikut, tanpa teks di luar JSON:
 
 function applyTrendToSchedule() {
   if (!lastTrendRecommendations || lastTrendRecommendations.length === 0) {
-    showToast('Jalankan analisis dulu!');
+    showToast("Jalankan analisis dulu!");
     return;
   }
 
   // Ambil bulan referensi dari input analisis tren, bukan bulan sekarang
-  const trendMonthInput = document.getElementById('trend-month');
+  const trendMonthInput = document.getElementById("trend-month");
   const now = new Date();
-  const todayMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const todayMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const monthKey = trendMonthInput?.value || todayMonthKey;
 
-  const [y, m] = monthKey.split('-').map(Number);
+  const [y, m] = monthKey.split("-").map(Number);
   const daysInMonth = new Date(y, m, 0).getDate();
 
   // Kalau bulan referensi = bulan ini, mulai dari hari ini. Kalau bulan lain, mulai dari 1.
@@ -474,96 +512,115 @@ function applyTrendToSchedule() {
 
   const TYPE_FROM_KONTEN = (konten) => {
     const k = konten.toLowerCase();
-    if (k.includes('karya') || k.includes('ilustrasi') || k.includes('artwork'))
-      return 'artwork';
-    if (k.includes('wip') || k.includes('proses') || k.includes('bts'))
-      return 'wip';
-    if (k.includes('carousel') || k.includes('thread')) return 'carousel';
-    if (k.includes('speed') || k.includes('reel')) return 'speedpaint';
-    return 'noncreative';
+    if (k.includes("karya") || k.includes("ilustrasi") || k.includes("artwork"))
+      return "artwork";
+    if (k.includes("wip") || k.includes("proses") || k.includes("bts"))
+      return "wip";
+    if (k.includes("carousel") || k.includes("thread")) return "carousel";
+    if (k.includes("speed") || k.includes("reel")) return "speedpaint";
+    return "noncreative";
   };
 
   const allData = JSON.parse(
-    localStorage.getItem('artassist-schedule-v2') || '{}',
+    localStorage.getItem("artassist-schedule-v2") || "{}",
   );
   if (!allData[monthKey]) allData[monthKey] = {};
+
+  // Kumpulkan semua tanggal per hari-dalam-minggu (mis. semua Senin di bulan ini),
+  // supaya rec "minggu 1/2/3/4" bisa dipetakan ke tanggal yang tepat, bukan cuma
+  // ngisi slot kosong pertama yang ketemu.
+  const weekdayDatesCache = {};
+  function getDatesForWeekday(dayOfWeekNum) {
+    if (weekdayDatesCache[dayOfWeekNum]) return weekdayDatesCache[dayOfWeekNum];
+    const dates = [];
+    for (let d = startDay; d <= daysInMonth; d++) {
+      const date = new Date(y, m - 1, d);
+      if (date.getDay() === dayOfWeekNum) dates.push(d);
+    }
+    weekdayDatesCache[dayOfWeekNum] = dates;
+    return dates;
+  }
 
   let added = 0;
   lastTrendRecommendations.forEach((rec) => {
     const targetDay = DAY_MAP[rec.hari];
     if (targetDay === undefined) return;
-    for (let d = startDay; d <= daysInMonth; d++) {
-      const date = new Date(y, m - 1, d);
-      if (date.getDay() === targetDay) {
-        const dateStr = `${monthKey}-${String(d).padStart(2, '0')}`;
-        if (
-          !allData[monthKey][dateStr] ||
-          allData[monthKey][dateStr].length === 0
-        ) {
-          allData[monthKey][dateStr] = [
-            {
-              platform: 'Instagram',
-              time: rec.jam || '19:00',
-              type: TYPE_FROM_KONTEN(rec.konten),
-              note: rec.konten,
-            },
-          ];
-          added++;
-          break;
-        }
-      }
+
+    const dates = getDatesForWeekday(targetDay);
+    if (dates.length === 0) return;
+
+    // minggu 1 => index 0, minggu 2 => index 1, dst.
+    // Kalau bulan cuma punya mis. 4 kemunculan Senin tapi rec minta minggu 5,
+    // fallback ke kemunculan terakhir yang ada.
+    const weekIdx = Math.min((rec.minggu || 1) - 1, dates.length - 1);
+    const d = dates[weekIdx];
+    const dateStr = `${monthKey}-${String(d).padStart(2, "0")}`;
+
+    if (
+      !allData[monthKey][dateStr] ||
+      allData[monthKey][dateStr].length === 0
+    ) {
+      allData[monthKey][dateStr] = [
+        {
+          platform: "Instagram",
+          time: rec.jam || "19:00",
+          type: TYPE_FROM_KONTEN(rec.konten),
+          note: rec.konten,
+        },
+      ];
+      added++;
     }
   });
 
-  localStorage.setItem('artassist-schedule-v2', JSON.stringify(allData));
+  localStorage.setItem("artassist-schedule-v2", JSON.stringify(allData));
 
   // Sync input bulan di halaman Jadwal supaya kalender langsung tampil bulan yang benar
-  const scheduleMonthInput = document.getElementById('schedule-month');
+  const scheduleMonthInput = document.getElementById("schedule-month");
   if (scheduleMonthInput) scheduleMonthInput.value = monthKey;
 
   // Pastikan modal tidak tertinggal terbuka (bisa block klik)
-  const overlay = document.getElementById('modal-overlay');
-  if (overlay) overlay.style.display = 'none';
+  const overlay = document.getElementById("modal-overlay");
+  if (overlay) overlay.style.display = "none";
 
   showToast(`✅ ${added} slot ditambahkan ke jadwal ${monthKey}!`);
   renderDashboard();
   scheduleData = allData;
 
   // Hanya re-render kalender jika halaman jadwal sedang aktif
-  const schedulePage = document.getElementById('schedule');
-  if (schedulePage && schedulePage.classList.contains('active')) {
+  const schedulePage = document.getElementById("schedule");
+  if (schedulePage && schedulePage.classList.contains("active")) {
     renderCalendar();
   }
 }
 function showToast(msg, duration = 3000) {
-  const toast = document.getElementById('toast');
+  const toast = document.getElementById("toast");
   toast.textContent = msg;
-  toast.style.display = 'block';
-  setTimeout(() => (toast.style.display = 'none'), duration);
+  toast.style.display = "block";
+  setTimeout(() => (toast.style.display = "none"), duration);
 }
 // =====================
 // GROQ API
 // =====================
-let GROQ_API_KEY = '';
-const GROQ_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+let GROQ_API_KEY = "";
+const GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
 // Load key saat app siap
-window.addEventListener('DOMContentLoaded', async () => {
-  GROQ_API_KEY = await ipcRenderer.invoke('get-groq-key');
+window.addEventListener("DOMContentLoaded", async () => {
+  GROQ_API_KEY = await ipcRenderer.invoke("get-groq-key");
 });
 
 async function askOllama(prompt) {
   const response = await fetch(
-    'https://api.groq.com/openai/v1/chat/completions',
+    "https://api.groq.com/openai/v1/chat/completions",
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${GROQ_API_KEY}`,
       },
       body: JSON.stringify({
         model: GROQ_MODEL,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: "user", content: prompt }],
         stream: false,
       }),
     },
@@ -575,22 +632,22 @@ async function askOllama(prompt) {
 
 async function askOllamaWithImage(prompt, base64Image) {
   const response = await fetch(
-    'https://api.groq.com/openai/v1/chat/completions',
+    "https://api.groq.com/openai/v1/chat/completions",
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${GROQ_API_KEY}`,
       },
       body: JSON.stringify({
         model: GROQ_MODEL,
         messages: [
           {
-            role: 'user',
+            role: "user",
             content: [
-              { type: 'text', text: prompt },
+              { type: "text", text: prompt },
               {
-                type: 'image_url',
+                type: "image_url",
                 image_url: { url: `data:image/jpeg;base64,${base64Image}` },
               },
             ],
@@ -615,50 +672,50 @@ function previewImage(event) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    currentImageBase64 = e.target.result.split(',')[1];
-    const preview = document.getElementById('img-preview');
+    currentImageBase64 = e.target.result.split(",")[1];
+    const preview = document.getElementById("img-preview");
     preview.src = e.target.result;
-    preview.style.display = 'block';
-    document.getElementById('upload-placeholder').style.display = 'none';
-    document.getElementById('upload-area').classList.add('has-image');
-    document.getElementById('btn-clear').style.display = 'inline-block';
+    preview.style.display = "block";
+    document.getElementById("upload-placeholder").style.display = "none";
+    document.getElementById("upload-area").classList.add("has-image");
+    document.getElementById("btn-clear").style.display = "inline-block";
   };
   reader.readAsDataURL(file);
 }
 
 function clearImage() {
   currentImageBase64 = null;
-  document.getElementById('img-preview').style.display = 'none';
-  document.getElementById('img-preview').src = '';
-  document.getElementById('upload-placeholder').style.display = 'block';
-  document.getElementById('upload-area').classList.remove('has-image');
-  document.getElementById('btn-clear').style.display = 'none';
-  document.getElementById('img-upload').value = '';
+  document.getElementById("img-preview").style.display = "none";
+  document.getElementById("img-preview").src = "";
+  document.getElementById("upload-placeholder").style.display = "block";
+  document.getElementById("upload-area").classList.remove("has-image");
+  document.getElementById("btn-clear").style.display = "none";
+  document.getElementById("img-upload").value = "";
 }
 
 // =====================
 // IDE KONTEN
 // =====================
 async function generateIdeas() {
-  const platform = document.getElementById('idea-platform').value;
-  const type = document.getElementById('idea-type').value;
-  const mood = document.getElementById('idea-mood').value;
+  const platform = document.getElementById("idea-platform").value;
+  const type = document.getElementById("idea-type").value;
+  const mood = document.getElementById("idea-mood").value;
 
-  const resultBox = document.getElementById('ideas-result');
-  resultBox.style.display = 'block';
-  resultBox.textContent = '⏳ Generating...';
+  const resultBox = document.getElementById("ideas-result");
+  resultBox.style.display = "block";
+  resultBox.textContent = "⏳ Generating...";
 
-  let trendContext = '';
+  let trendContext = "";
   try {
     trendContext = await getTrendContext();
   } catch (e) {}
 
   const prompt = `Kamu adalah social media strategist untuk illustrator anime/manga.
-${trendContext ? `\n${trendContext}\nBerdasarkan data tren di atas, b` : 'B'}erikan 5 ide konten spesifik dan kreatif untuk illustrator yang fokus menggambar karakter cowok shota (cute boy anime style).
+${trendContext ? `\n${trendContext}\nBerdasarkan data tren di atas, b` : "B"}erikan 5 ide konten spesifik dan kreatif untuk illustrator yang fokus menggambar karakter cowok shota (cute boy anime style).
 
 Platform: ${platform}
 Jenis konten: ${type}
-Tema/mood: ${mood || 'bebas'}
+Tema/mood: ${mood || "bebas"}
 
 Format: nomor. judul ide — cara eksekusinya singkat (1-2 kalimat). Langsung ke poin tanpa intro. Bahasa Indonesia yang natural.`;
 
@@ -667,7 +724,7 @@ Format: nomor. judul ide — cara eksekusinya singkat (1-2 kalimat). Langsung ke
     resultBox.textContent = result;
   } catch (err) {
     resultBox.textContent =
-      '❌ Gagal konek ke Groq. Cek API key atau koneksi internet.';
+      "❌ Gagal konek ke Groq. Cek API key atau koneksi internet.";
   }
 }
 
@@ -675,24 +732,24 @@ Format: nomor. judul ide — cara eksekusinya singkat (1-2 kalimat). Langsung ke
 // CAPTION & HOOK
 // =====================
 async function generateCaption() {
-  const platform = document.getElementById('cap-platform').value;
-  const goal = document.getElementById('cap-goal').value;
-  const desc = document.getElementById('cap-desc').value;
-  const tone = document.getElementById('cap-tone').value;
+  const platform = document.getElementById("cap-platform").value;
+  const goal = document.getElementById("cap-goal").value;
+  const desc = document.getElementById("cap-desc").value;
+  const tone = document.getElementById("cap-tone").value;
 
   const toneMap = {
-    cute: 'lucu dan menggemaskan',
-    casual: 'santai dan friendly',
-    hype: 'hype dan excited',
-    story: 'bercerita dan emosional',
-    funny: 'humoris dan relatable',
+    cute: "lucu dan menggemaskan",
+    casual: "santai dan friendly",
+    hype: "hype dan excited",
+    story: "bercerita dan emosional",
+    funny: "humoris dan relatable",
   };
 
-  const resultBox = document.getElementById('caption-result');
-  resultBox.style.display = 'block';
-  resultBox.textContent = '⏳ Generating...';
+  const resultBox = document.getElementById("caption-result");
+  resultBox.style.display = "block";
+  resultBox.textContent = "⏳ Generating...";
 
-  let trendContext = '';
+  let trendContext = "";
   try {
     trendContext = await getTrendContext();
   } catch (e) {}
@@ -701,8 +758,8 @@ async function generateCaption() {
   if (currentImageBase64) {
     prompt = `Kamu adalah social media copywriter untuk illustrator anime/manga.
 Lihat gambar karya ini dengan seksama. Analisis apa yang kamu lihat — karakter, ekspresi, warna, mood, setting, dan detail visualnya.
-${trendContext ? `\n${trendContext}\n` : ''}
-Deskripsi tambahan dari user: ${desc || 'tidak ada'}
+${trendContext ? `\n${trendContext}\n` : ""}
+Deskripsi tambahan dari user: ${desc || "tidak ada"}
 Platform: ${platform}
 Tujuan: ${goal}
 Tone: ${toneMap[tone]}
@@ -717,12 +774,12 @@ EMOJI: (3 emoji yang cocok dengan mood gambar)
 Bahasa Indonesia yang natural dan gaul.`;
   } else {
     if (!desc.trim()) {
-      showToast('Upload gambar atau isi deskripsi karya dulu!');
-      resultBox.style.display = 'none';
+      showToast("Upload gambar atau isi deskripsi karya dulu!");
+      resultBox.style.display = "none";
       return;
     }
     prompt = `Kamu adalah social media copywriter untuk illustrator anime/manga.
-${trendContext ? `\n${trendContext}\n` : ''}
+${trendContext ? `\n${trendContext}\n` : ""}
 Buat caption ${platform} untuk illustrator yang fokus menggambar karakter cowok shota (cute anime boy style).
 
 Deskripsi karya: ${desc}
@@ -745,7 +802,7 @@ Bahasa Indonesia yang natural dan gaul.`;
     resultBox.textContent = result;
   } catch (err) {
     resultBox.textContent =
-      '❌ Gagal konek ke Groq. Cek API key atau koneksi internet.';
+      "❌ Gagal konek ke Groq. Cek API key atau koneksi internet.";
   }
 }
 
@@ -759,54 +816,54 @@ function previewImageHash(event) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    currentImageBase64Hash = e.target.result.split(',')[1];
-    const preview = document.getElementById('img-preview-hash');
+    currentImageBase64Hash = e.target.result.split(",")[1];
+    const preview = document.getElementById("img-preview-hash");
     preview.src = e.target.result;
-    preview.style.display = 'block';
-    document.getElementById('upload-placeholder-hash').style.display = 'none';
-    document.getElementById('upload-area-hash').classList.add('has-image');
-    document.getElementById('btn-clear-hash').style.display = 'inline-block';
+    preview.style.display = "block";
+    document.getElementById("upload-placeholder-hash").style.display = "none";
+    document.getElementById("upload-area-hash").classList.add("has-image");
+    document.getElementById("btn-clear-hash").style.display = "inline-block";
   };
   reader.readAsDataURL(file);
 }
 
 function clearImageHash() {
   currentImageBase64Hash = null;
-  document.getElementById('img-preview-hash').style.display = 'none';
-  document.getElementById('img-preview-hash').src = '';
-  document.getElementById('upload-placeholder-hash').style.display = 'block';
-  document.getElementById('upload-area-hash').classList.remove('has-image');
-  document.getElementById('btn-clear-hash').style.display = 'none';
-  document.getElementById('img-upload-hash').value = '';
+  document.getElementById("img-preview-hash").style.display = "none";
+  document.getElementById("img-preview-hash").src = "";
+  document.getElementById("upload-placeholder-hash").style.display = "block";
+  document.getElementById("upload-area-hash").classList.remove("has-image");
+  document.getElementById("btn-clear-hash").style.display = "none";
+  document.getElementById("img-upload-hash").value = "";
 }
 
 // =====================
 // HASHTAG GENERATOR
 // =====================
 async function generateHashtags() {
-  const platform = document.getElementById('hash-platform').value;
-  const desc = document.getElementById('hash-desc').value;
-  const count = document.getElementById('hash-count').value;
-  const strategy = document.getElementById('hash-strategy').value;
+  const platform = document.getElementById("hash-platform").value;
+  const desc = document.getElementById("hash-desc").value;
+  const count = document.getElementById("hash-count").value;
+  const strategy = document.getElementById("hash-strategy").value;
 
   if (!desc.trim() && !currentImageBase64Hash) {
-    showToast('Upload gambar atau isi deskripsi dulu!');
+    showToast("Upload gambar atau isi deskripsi dulu!");
     return;
   }
 
   const strategyMap = {
-    mix: 'campuran: 50% hashtag niche kecil (di bawah 100rb post), 30% medium (100rb-1jt post), 20% besar (di atas 1jt post)',
+    mix: "campuran: 50% hashtag niche kecil (di bawah 100rb post), 30% medium (100rb-1jt post), 20% besar (di atas 1jt post)",
     niche:
-      'niche spesifik saja — komunitas kecil tapi sangat targeted dan engaged',
-    trending: 'trending dan populer — mix hashtag viral dengan yang relevan',
+      "niche spesifik saja — komunitas kecil tapi sangat targeted dan engaged",
+    trending: "trending dan populer — mix hashtag viral dengan yang relevan",
   };
 
-  const resultBox = document.getElementById('hashtag-result');
-  resultBox.style.display = 'block';
-  resultBox.textContent = '⏳ Generating...';
-  document.getElementById('btn-copy-hash').style.display = 'none';
+  const resultBox = document.getElementById("hashtag-result");
+  resultBox.style.display = "block";
+  resultBox.textContent = "⏳ Generating...";
+  document.getElementById("btn-copy-hash").style.display = "none";
 
-  let trendContext = '';
+  let trendContext = "";
   try {
     trendContext = await getTrendContext();
   } catch (e) {}
@@ -815,10 +872,10 @@ async function generateHashtags() {
   if (currentImageBase64Hash) {
     prompt = `Kamu adalah social media hashtag strategist untuk illustrator anime/manga.
 Lihat gambar ini dengan seksama. Analisis konten, style, mood, dan elemen visualnya.
-${trendContext ? `\n${trendContext}\n` : ''}
+${trendContext ? `\n${trendContext}\n` : ""}
 Berdasarkan analisis gambar dan data tren di atas, buat ${count} hashtag ${platform} yang paling relevan.
 
-Deskripsi tambahan: ${desc || 'tidak ada'}
+Deskripsi tambahan: ${desc || "tidak ada"}
 Strategi: ${strategyMap[strategy]}
 
 Kelompokkan dengan format:
@@ -834,7 +891,7 @@ Kelompokkan dengan format:
 Tulis hashtag langsung tanpa penjelasan. Gunakan bahasa Inggris dan Jepang (romaji) karena komunitas anime art global.`;
   } else {
     prompt = `Kamu adalah social media hashtag strategist untuk illustrator anime/manga.
-${trendContext ? `\n${trendContext}\n` : ''}
+${trendContext ? `\n${trendContext}\n` : ""}
 Buat ${count} hashtag ${platform} untuk konten illustrator yang fokus di karakter cowok shota (cute anime boy style).
 
 Deskripsi konten: ${desc}
@@ -858,22 +915,22 @@ Tulis hashtag langsung tanpa penjelasan. Gunakan bahasa Inggris dan Jepang (roma
       ? await askOllamaWithImage(prompt, currentImageBase64Hash)
       : await askOllama(prompt);
     resultBox.textContent = result;
-    document.getElementById('btn-copy-hash').style.display = 'inline-block';
+    document.getElementById("btn-copy-hash").style.display = "inline-block";
   } catch (err) {
     resultBox.textContent =
-      '❌ Gagal konek ke Groq. Cek API key atau koneksi internet.';
+      "❌ Gagal konek ke Groq. Cek API key atau koneksi internet.";
   }
 }
 
 function copyHashtags() {
-  const text = document.getElementById('hashtag-result').textContent;
+  const text = document.getElementById("hashtag-result").textContent;
   const hashtagsOnly = text.match(/#\w+/g);
   if (hashtagsOnly) {
-    navigator.clipboard.writeText(hashtagsOnly.join(' '));
-    document.getElementById('btn-copy-hash').textContent = '✅ Tersalin!';
+    navigator.clipboard.writeText(hashtagsOnly.join(" "));
+    document.getElementById("btn-copy-hash").textContent = "✅ Tersalin!";
     setTimeout(() => {
-      document.getElementById('btn-copy-hash').textContent =
-        '📋 Copy Semua Hashtag';
+      document.getElementById("btn-copy-hash").textContent =
+        "📋 Copy Semua Hashtag";
     }, 2000);
   }
 }
@@ -882,30 +939,30 @@ function copyHashtags() {
 // JADWAL BULANAN
 // =====================
 const PLATFORM_COLORS = {
-  Instagram: '#e1306c',
-  TikTok: '#69c9d0',
-  'Twitter/X': '#1d9bf0',
-  Facebook: '#1877f2',
+  Instagram: "#e1306c",
+  TikTok: "#69c9d0",
+  "Twitter/X": "#1d9bf0",
+  Facebook: "#1877f2",
 };
 
 const CONTENT_TYPE_CLASS = {
-  artwork: 'type-artwork',
-  wip: 'type-wip',
-  noncreative: 'type-noncreative',
-  carousel: 'type-carousel',
-  speedpaint: 'type-speedpaint',
+  artwork: "type-artwork",
+  wip: "type-wip",
+  noncreative: "type-noncreative",
+  carousel: "type-carousel",
+  speedpaint: "type-speedpaint",
 };
 
 const CONTENT_TYPE_LABEL = {
-  artwork: '🖼️',
-  wip: '📸',
-  noncreative: '✍️',
-  carousel: '📖',
-  speedpaint: '🎬',
+  artwork: "🖼️",
+  wip: "📸",
+  noncreative: "✍️",
+  carousel: "📖",
+  speedpaint: "🎬",
 };
 
 let scheduleData = JSON.parse(
-  localStorage.getItem('artassist-schedule-v2') || '{}',
+  localStorage.getItem("artassist-schedule-v2") || "{}",
 );
 let editingSlot = null;
 
@@ -914,7 +971,7 @@ let editingSlot = null;
 // =====================
 function cleanOldScheduleData() {
   const now = new Date();
-  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   let deleted = 0;
   Object.keys(scheduleData).forEach((key) => {
     if (key < currentMonthKey) {
@@ -924,8 +981,8 @@ function cleanOldScheduleData() {
   });
   if (deleted > 0) {
     const json = JSON.stringify(scheduleData);
-    localStorage.setItem('artassist-schedule-v2', json);
-    ipcRenderer.send('schedule-updated', json);
+    localStorage.setItem("artassist-schedule-v2", json);
+    ipcRenderer.send("schedule-updated", json);
     console.log(`[CleanUp] ${deleted} bulan lama dihapus.`);
   }
 }
@@ -933,41 +990,41 @@ cleanOldScheduleData();
 
 function saveSchedule() {
   const json = JSON.stringify(scheduleData);
-  localStorage.setItem('artassist-schedule-v2', json);
-  ipcRenderer.send('schedule-updated', json);
+  localStorage.setItem("artassist-schedule-v2", json);
+  ipcRenderer.send("schedule-updated", json);
 }
 
 function getMonthKey() {
-  return document.getElementById('schedule-month')?.value || '';
+  return document.getElementById("schedule-month")?.value || "";
 }
 
 function getDaysInMonth(monthKey) {
-  const [y, m] = monthKey.split('-').map(Number);
+  const [y, m] = monthKey.split("-").map(Number);
   return new Date(y, m, 0).getDate();
 }
 
 function getFirstDayOfWeek(monthKey) {
-  const [y, m] = monthKey.split('-').map(Number);
+  const [y, m] = monthKey.split("-").map(Number);
   const day = new Date(y, m - 1, 1).getDay();
   return day === 0 ? 6 : day - 1;
 }
 
 function renderCalendar() {
-  const monthInput = document.getElementById('schedule-month');
+  const monthInput = document.getElementById("schedule-month");
   if (monthInput && !monthInput.value) {
     const now = new Date();
-    monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   }
   const monthKey = getMonthKey();
-  const grid = document.getElementById('calendar-month');
+  const grid = document.getElementById("calendar-month");
   if (!grid || !monthKey) return;
-  grid.innerHTML = '';
+  grid.innerHTML = "";
 
   // ... sisa kode renderCalendar yang sudah ada
-  const DAY_NAMES = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+  const DAY_NAMES = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
   DAY_NAMES.forEach((d) => {
-    const h = document.createElement('div');
-    h.className = 'cal-month-header';
+    const h = document.createElement("div");
+    h.className = "cal-month-header";
     h.textContent = d;
     grid.appendChild(h);
   });
@@ -975,31 +1032,31 @@ function renderCalendar() {
   const totalDays = getDaysInMonth(monthKey);
   const firstDay = getFirstDayOfWeek(monthKey);
   const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   for (let i = 0; i < firstDay; i++) {
-    const empty = document.createElement('div');
-    empty.className = 'cal-day-cell empty';
+    const empty = document.createElement("div");
+    empty.className = "cal-day-cell empty";
     grid.appendChild(empty);
   }
 
   const monthPosts = scheduleData[monthKey] || {};
 
   for (let d = 1; d <= totalDays; d++) {
-    const dateStr = `${monthKey}-${String(d).padStart(2, '0')}`;
-    const cell = document.createElement('div');
-    cell.className = 'cal-day-cell' + (dateStr === todayStr ? ' today' : '');
+    const dateStr = `${monthKey}-${String(d).padStart(2, "0")}`;
+    const cell = document.createElement("div");
+    cell.className = "cal-day-cell" + (dateStr === todayStr ? " today" : "");
 
-    const dayNum = document.createElement('div');
-    dayNum.className = 'cal-day-num';
+    const dayNum = document.createElement("div");
+    dayNum.className = "cal-day-num";
     dayNum.textContent = d;
     cell.appendChild(dayNum);
 
     const posts = monthPosts[dateStr] || [];
     posts.forEach((post, idx) => {
-      const card = document.createElement('div');
-      card.className = `cal-month-card ${CONTENT_TYPE_CLASS[post.type] || 'type-artwork'}`;
-      card.textContent = `${CONTENT_TYPE_LABEL[post.type] || '🖼️'} ${post.time} ${post.platform}`;
+      const card = document.createElement("div");
+      card.className = `cal-month-card ${CONTENT_TYPE_CLASS[post.type] || "type-artwork"}`;
+      card.textContent = `${CONTENT_TYPE_LABEL[post.type] || "🖼️"} ${post.time} ${post.platform}`;
       card.onclick = (e) => {
         e.stopPropagation();
         openModal(dateStr, idx);
@@ -1017,19 +1074,19 @@ function openModal(dateStr, index) {
   const posts = (scheduleData[getMonthKey()] || {})[dateStr] || [];
   const post = index !== null ? posts[index] : null;
 
-  document.getElementById('modal-date').value = dateStr;
-  document.getElementById('modal-platform').value =
-    post?.platform || 'Instagram';
-  document.getElementById('modal-time').value = post?.time || '19:00';
-  document.getElementById('modal-type').value = post?.type || 'artwork';
-  document.getElementById('modal-note').value = post?.note || '';
-  document.getElementById('btn-delete-post').style.display =
-    index !== null ? 'inline-block' : 'none';
-  document.getElementById('modal-overlay').style.display = 'flex';
+  document.getElementById("modal-date").value = dateStr;
+  document.getElementById("modal-platform").value =
+    post?.platform || "Instagram";
+  document.getElementById("modal-time").value = post?.time || "19:00";
+  document.getElementById("modal-type").value = post?.type || "artwork";
+  document.getElementById("modal-note").value = post?.note || "";
+  document.getElementById("btn-delete-post").style.display =
+    index !== null ? "inline-block" : "none";
+  document.getElementById("modal-overlay").style.display = "flex";
 }
 
 function closeModal() {
-  document.getElementById('modal-overlay').style.display = 'none';
+  document.getElementById("modal-overlay").style.display = "none";
   editingSlot = null;
 }
 
@@ -1037,10 +1094,10 @@ function savePost() {
   const { dateStr } = editingSlot;
   const monthKey = getMonthKey();
   const post = {
-    platform: document.getElementById('modal-platform').value,
-    time: document.getElementById('modal-time').value,
-    type: document.getElementById('modal-type').value,
-    note: document.getElementById('modal-note').value,
+    platform: document.getElementById("modal-platform").value,
+    time: document.getElementById("modal-time").value,
+    type: document.getElementById("modal-type").value,
+    note: document.getElementById("modal-note").value,
   };
 
   if (!scheduleData[monthKey]) scheduleData[monthKey] = {};
@@ -1090,40 +1147,40 @@ function exportSchedule() {
       if (posts.length) {
         text += `${dateStr}\n`;
         posts.forEach((p) => {
-          text += `  • ${p.time} — ${p.platform} — ${p.type}${p.note ? ` (${p.note})` : ''}\n`;
+          text += `  • ${p.time} — ${p.platform} — ${p.type}${p.note ? ` (${p.note})` : ""}\n`;
         });
-        text += '\n';
+        text += "\n";
       }
     });
   navigator.clipboard.writeText(text);
-  showToast('Jadwal tersalin ke clipboard!');
+  showToast("Jadwal tersalin ke clipboard!");
 }
 
 async function generateScheduleSuggestion() {
   const monthKey = getMonthKey();
   if (!monthKey) {
-    showToast('Pilih bulan dulu!');
+    showToast("Pilih bulan dulu!");
     return;
   }
 
-  const complexity = document.getElementById('art-complexity').value;
-  const activeDays = document.getElementById('art-active-days').value;
+  const complexity = document.getElementById("art-complexity").value;
+  const activeDays = document.getElementById("art-active-days").value;
   const totalDays = getDaysInMonth(monthKey);
-  const [y, m] = monthKey.split('-');
+  const [y, m] = monthKey.split("-");
 
   const complexityMap = {
-    sketch: '1-2 hari per karya',
-    medium: '3-4 hari per karya',
-    detail: '5-7 hari per karya',
+    sketch: "1-2 hari per karya",
+    medium: "3-4 hari per karya",
+    detail: "5-7 hari per karya",
   };
 
-  let trendContext = '';
+  let trendContext = "";
   try {
     trendContext = await getTrendContext();
   } catch (e) {}
 
   const prompt = `Kamu adalah social media strategist untuk illustrator anime/manga.
-${trendContext ? `\n${trendContext}\n` : ''}
+${trendContext ? `\n${trendContext}\n` : ""}
 Buat jadwal posting realistis untuk bulan ${monthKey} (total ${totalDays} hari).
 
 Kondisi artist:
@@ -1147,9 +1204,9 @@ Balas HANYA dengan JSON format ini, tanpa penjelasan apapun:
 
 type hanya boleh: artwork, wip, noncreative, carousel, speedpaint`;
 
-  const btn = document.querySelector('#schedule .btn-generate');
+  const btn = document.querySelector("#schedule .btn-generate");
   if (btn) {
-    btn.textContent = '⏳ Generating...';
+    btn.textContent = "⏳ Generating...";
     btn.disabled = true;
   }
 
@@ -1160,7 +1217,7 @@ type hanya boleh: artwork, wip, noncreative, carousel, speedpaint`;
       const cleaned = cleanOllamaJSON(raw);
       suggestion = JSON.parse(cleaned);
     } catch (e) {
-      throw new Error('Format JSON tidak valid dari Groq');
+      throw new Error("Format JSON tidak valid dari Groq");
     }
 
     if (!scheduleData[monthKey]) scheduleData[monthKey] = {};
@@ -1176,12 +1233,12 @@ type hanya boleh: artwork, wip, noncreative, carousel, speedpaint`;
     saveSchedule();
     renderCalendar();
   } catch (err) {
-    showToast('Gagal generate jadwal. Coba lagi atau isi manual.');
+    showToast("Gagal generate jadwal. Coba lagi atau isi manual.");
   } finally {
-    const btn = document.querySelector('#schedule .btn-generate');
+    const btn = document.querySelector("#schedule .btn-generate");
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '✦ Auto-isi Jadwal';
+      btn.textContent = "✦ Auto-isi Jadwal";
     }
   }
 }
@@ -1189,43 +1246,43 @@ type hanya boleh: artwork, wip, noncreative, carousel, speedpaint`;
 // =====================
 // THREAD / CAROUSEL
 // =====================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   const now = new Date();
-  const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const monthInput = document.getElementById('schedule-month');
+  const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const monthInput = document.getElementById("schedule-month");
   if (monthInput) {
     monthInput.value = defaultMonth;
-    monthInput.addEventListener('change', renderCalendar);
+    monthInput.addEventListener("change", renderCalendar);
   }
   renderCalendar();
-  document.querySelectorAll('.nav').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (btn.dataset.page === 'schedule') setTimeout(renderCalendar, 50);
+  document.querySelectorAll(".nav").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.page === "schedule") setTimeout(renderCalendar, 50);
     });
   });
 });
 
 async function generateThread() {
-  const platform = document.getElementById('thread-platform').value;
-  const topic = document.getElementById('thread-topic').value.trim();
-  const goal = document.getElementById('thread-goal').value;
-  const count = document.getElementById('thread-count').value;
-  const tone = document.getElementById('thread-tone').value;
+  const platform = document.getElementById("thread-platform").value;
+  const topic = document.getElementById("thread-topic").value.trim();
+  const goal = document.getElementById("thread-goal").value;
+  const count = document.getElementById("thread-count").value;
+  const tone = document.getElementById("thread-tone").value;
 
   if (!topic) {
-    showToast('Isi topik dulu!');
+    showToast("Isi topik dulu!");
     return;
   }
 
   const toneMap = {
-    casual: 'santai, personal, seperti ngobrol dengan teman',
-    edu: 'edukatif, informatif, jelas dan mudah dipahami',
-    hype: 'energetik, excited, bikin semangat',
-    story: 'bercerita, emosional, membangun narasi',
+    casual: "santai, personal, seperti ngobrol dengan teman",
+    edu: "edukatif, informatif, jelas dan mudah dipahami",
+    hype: "energetik, excited, bikin semangat",
+    story: "bercerita, emosional, membangun narasi",
   };
 
-  const isTwitter = platform.includes('Twitter');
-  const formatName = isTwitter ? 'thread Twitter/X' : 'carousel Instagram';
+  const isTwitter = platform.includes("Twitter");
+  const formatName = isTwitter ? "thread Twitter/X" : "carousel Instagram";
 
   const prompt = `Kamu adalah content creator untuk illustrator anime/manga.
 Buat ${formatName} dengan ${count} bagian tentang: "${topic}"
@@ -1239,20 +1296,20 @@ ${
 
 Format output WAJIB seperti ini:
 SLIDE_1
-${isTwitter ? 'ISI TWEET PERTAMA (hook yang bikin orang mau baca lanjut)' : 'JUDUL: judul slide\nISI: isi slide'}
+${isTwitter ? "ISI TWEET PERTAMA (hook yang bikin orang mau baca lanjut)" : "JUDUL: judul slide\nISI: isi slide"}
 
 SLIDE_2
-${isTwitter ? 'ISI TWEET KEDUA' : 'JUDUL: judul slide\nISI: isi slide'}
+${isTwitter ? "ISI TWEET KEDUA" : "JUDUL: judul slide\nISI: isi slide"}
 
 ...dst sampai SLIDE_${count}
 
 Bahasa Indonesia yang natural. Fokus untuk komunitas illustrator anime.`;
 
-  const container = document.getElementById('thread-result-container');
-  const slidesEl = document.getElementById('thread-slides');
-  const label = document.getElementById('thread-result-label');
+  const container = document.getElementById("thread-result-container");
+  const slidesEl = document.getElementById("thread-slides");
+  const label = document.getElementById("thread-result-label");
 
-  container.style.display = 'block';
+  container.style.display = "block";
   slidesEl.innerHTML =
     '<div style="color:#a78bfa;font-size:13px">⏳ Generating...</div>';
 
@@ -1263,49 +1320,49 @@ Bahasa Indonesia yang natural. Fokus untuk komunitas illustrator anime.`;
       : `📖 Carousel (${count} slides)`;
 
     const rawSlides = result.split(/SLIDE_\d+\n?/).filter((s) => s.trim());
-    slidesEl.innerHTML = '';
+    slidesEl.innerHTML = "";
 
     rawSlides.forEach((content, i) => {
-      const card = document.createElement('div');
-      card.className = 'thread-card';
+      const card = document.createElement("div");
+      card.className = "thread-card";
 
-      const num = document.createElement('div');
-      num.className = 'thread-num';
+      const num = document.createElement("div");
+      num.className = "thread-num";
       num.textContent = isTwitter
         ? `${i + 1}/${rawSlides.length}`
         : `Slide ${i + 1}`;
       card.appendChild(num);
 
-      if (!isTwitter && content.includes('JUDUL:')) {
+      if (!isTwitter && content.includes("JUDUL:")) {
         const titleMatch = content.match(/JUDUL:\s*(.+)/);
         const bodyMatch = content.match(/ISI:\s*([\s\S]+)/);
         if (titleMatch) {
-          const title = document.createElement('div');
-          title.className = 'thread-slide-title';
+          const title = document.createElement("div");
+          title.className = "thread-slide-title";
           title.textContent = titleMatch[1].trim();
           card.appendChild(title);
         }
         if (bodyMatch) {
-          const body = document.createElement('div');
-          body.className = 'thread-slide-body';
+          const body = document.createElement("div");
+          body.className = "thread-slide-body";
           body.textContent = bodyMatch[1].trim();
           card.appendChild(body);
         }
       } else {
-        const body = document.createElement('div');
-        body.className = 'thread-slide-body';
+        const body = document.createElement("div");
+        body.className = "thread-slide-body";
         body.textContent = content.trim();
         card.appendChild(body);
       }
 
-      const copyBtn = document.createElement('button');
-      copyBtn.className = 'btn-copy-slide';
-      copyBtn.textContent = '📋';
-      copyBtn.title = 'Copy slide ini';
+      const copyBtn = document.createElement("button");
+      copyBtn.className = "btn-copy-slide";
+      copyBtn.textContent = "📋";
+      copyBtn.title = "Copy slide ini";
       copyBtn.onclick = () => {
         navigator.clipboard.writeText(content.trim());
-        copyBtn.textContent = '✅';
-        setTimeout(() => (copyBtn.textContent = '📋'), 1500);
+        copyBtn.textContent = "✅";
+        setTimeout(() => (copyBtn.textContent = "📋"), 1500);
       };
       card.appendChild(copyBtn);
       slidesEl.appendChild(card);
@@ -1317,14 +1374,14 @@ Bahasa Indonesia yang natural. Fokus untuk komunitas illustrator anime.`;
 }
 
 function copyThread() {
-  const cards = document.querySelectorAll('.thread-card .thread-slide-body');
+  const cards = document.querySelectorAll(".thread-card .thread-slide-body");
   const text = Array.from(cards)
     .map((el, i) => `${i + 1}. ${el.textContent}`)
-    .join('\n\n');
+    .join("\n\n");
   navigator.clipboard.writeText(text);
-  const btn = document.querySelector('#thread-result-container .btn-copy');
-  btn.textContent = '✅ Tersalin!';
-  setTimeout(() => (btn.textContent = '📋 Copy Semua'), 2000);
+  const btn = document.querySelector("#thread-result-container .btn-copy");
+  btn.textContent = "✅ Tersalin!";
+  setTimeout(() => (btn.textContent = "📋 Copy Semua"), 2000);
 }
 // =====================
 // TIPS GROWTH
@@ -1332,195 +1389,195 @@ function copyThread() {
 const TIPS_DATA = [
   // INSTAGRAM - ALGORITMA
   {
-    platform: 'Instagram',
-    category: 'Algoritma',
-    goal: 'Nambah Followers',
-    title: 'Post Reels dulu, foto belakangan',
-    body: 'Algoritma IG 2024 sangat memprioritaskan Reels untuk reach organik. Speed draw 15-30 detik jauh lebih mudah viral dibanding static post.',
-    action: '⚡ Action: Konversi 1 karya per minggu jadi Reels speed draw.',
+    platform: "Instagram",
+    category: "Algoritma",
+    goal: "Nambah Followers",
+    title: "Post Reels dulu, foto belakangan",
+    body: "Algoritma IG 2024 sangat memprioritaskan Reels untuk reach organik. Speed draw 15-30 detik jauh lebih mudah viral dibanding static post.",
+    action: "⚡ Action: Konversi 1 karya per minggu jadi Reels speed draw.",
   },
   {
-    platform: 'Instagram',
-    category: 'Algoritma',
-    goal: 'Viral',
-    title: 'Hook 3 detik pertama = segalanya',
+    platform: "Instagram",
+    category: "Algoritma",
+    goal: "Viral",
+    title: "Hook 3 detik pertama = segalanya",
     body: 'Instagram mengukur "watch time". Mulai Reels dengan bagian paling menarik dari prosesmu — bukan dari awal sketsa yang kosong.',
     action:
-      '⚡ Action: Mulai video dari reveal akhir, lalu mundur ke prosesnya.',
+      "⚡ Action: Mulai video dari reveal akhir, lalu mundur ke prosesnya.",
   },
   {
-    platform: 'Instagram',
-    category: 'Engagement',
-    goal: 'Nambah Followers',
+    platform: "Instagram",
+    category: "Engagement",
+    goal: "Nambah Followers",
     title: 'CTA spesifik lebih efektif dari "like & follow"',
     body: 'Ganti "follow untuk konten lebih banyak" dengan pertanyaan spesifik: "Kalau karakter ini punya kekuatan, kamu pilih apa?" — komentar meledak.',
     action:
-      '⚡ Action: Setiap caption wajib ada 1 pertanyaan yang mudah dijawab.',
+      "⚡ Action: Setiap caption wajib ada 1 pertanyaan yang mudah dijawab.",
   },
   {
-    platform: 'Instagram',
-    category: 'Engagement',
-    goal: 'Viral',
-    title: 'Balas komentar dalam 1 jam pertama',
-    body: 'IG boost post yang dapat engagement cepat. Balas setiap komentar dalam 60 menit setelah posting untuk trigger algoritma.',
-    action: '⚡ Action: Set alarm 1 jam setelah jadwal posting.',
+    platform: "Instagram",
+    category: "Engagement",
+    goal: "Viral",
+    title: "Balas komentar dalam 1 jam pertama",
+    body: "IG boost post yang dapat engagement cepat. Balas setiap komentar dalam 60 menit setelah posting untuk trigger algoritma.",
+    action: "⚡ Action: Set alarm 1 jam setelah jadwal posting.",
   },
   {
-    platform: 'Instagram',
-    category: 'Konsistensi',
-    goal: 'Nambah Followers',
-    title: 'Posting jam 19.00–21.00 WIB',
-    body: 'Audience anime art Indonesia paling aktif setelah pulang sekolah/kerja. Hindari posting tengah hari saat engagement rendah.',
-    action: '⚡ Action: Jadwalkan semua post di jam ini via Creator Studio.',
+    platform: "Instagram",
+    category: "Konsistensi",
+    goal: "Nambah Followers",
+    title: "Posting jam 19.00–21.00 WIB",
+    body: "Audience anime art Indonesia paling aktif setelah pulang sekolah/kerja. Hindari posting tengah hari saat engagement rendah.",
+    action: "⚡ Action: Jadwalkan semua post di jam ini via Creator Studio.",
   },
   {
-    platform: 'Instagram',
-    category: 'Branding',
-    goal: 'Dapet Komisi',
+    platform: "Instagram",
+    category: "Branding",
+    goal: "Dapet Komisi",
     title: 'Bio harus ada kata "commission"',
     body: 'Klien yang cari komisioner browse profile, bukan DM langsung. Pastikan bio-mu jelas: "Open Commission | DM for info" + link price list.',
     action:
-      '⚡ Action: Update bio sekarang, tambah link Carrd/Notion price list.',
+      "⚡ Action: Update bio sekarang, tambah link Carrd/Notion price list.",
   },
   {
-    platform: 'Instagram',
-    category: 'Branding',
-    goal: 'Dapet Komisi',
+    platform: "Instagram",
+    category: "Branding",
+    goal: "Dapet Komisi",
     title: 'Highlight "Commission Info" di profil',
-    body: 'Buat Story Highlight khusus berisi contoh karya komisi, harga, dan cara order. Ini berfungsi seperti portofolio mini yang selalu terlihat.',
-    action: '⚡ Action: Buat highlight dengan cover icon yang konsisten.',
+    body: "Buat Story Highlight khusus berisi contoh karya komisi, harga, dan cara order. Ini berfungsi seperti portofolio mini yang selalu terlihat.",
+    action: "⚡ Action: Buat highlight dengan cover icon yang konsisten.",
   },
 
   // TIKTOK - ALGORITMA
   {
-    platform: 'TikTok',
-    category: 'Algoritma',
-    goal: 'Viral',
-    title: 'Video 7–15 detik punya reach tertinggi',
-    body: 'TikTok memprioritaskan completion rate. Video pendek lebih mudah ditonton habis. Speed draw dengan musik trending = kombinasi paling kuat.',
+    platform: "TikTok",
+    category: "Algoritma",
+    goal: "Viral",
+    title: "Video 7–15 detik punya reach tertinggi",
+    body: "TikTok memprioritaskan completion rate. Video pendek lebih mudah ditonton habis. Speed draw dengan musik trending = kombinasi paling kuat.",
     action:
-      '⚡ Action: Buat speed draw 10 detik per karya, gunakan sound trending.',
+      "⚡ Action: Buat speed draw 10 detik per karya, gunakan sound trending.",
   },
   {
-    platform: 'TikTok',
-    category: 'Algoritma',
-    goal: 'Nambah Followers',
-    title: 'Pakai niche hashtag, bukan mega hashtag',
-    body: '#art punya miliaran post — kamu tenggelam. Coba #animeartist #digitalartprocess #animefanart yang lebih tertarget dan kompetisinya lebih rendah.',
+    platform: "TikTok",
+    category: "Algoritma",
+    goal: "Nambah Followers",
+    title: "Pakai niche hashtag, bukan mega hashtag",
+    body: "#art punya miliaran post — kamu tenggelam. Coba #animeartist #digitalartprocess #animefanart yang lebih tertarget dan kompetisinya lebih rendah.",
     action:
-      '⚡ Action: Gunakan 3-5 hashtag niche, 1-2 hashtag medium per post.',
+      "⚡ Action: Gunakan 3-5 hashtag niche, 1-2 hashtag medium per post.",
   },
   {
-    platform: 'TikTok',
-    category: 'Engagement',
-    goal: 'Viral',
-    title: 'Stitch & Duet konten trending',
+    platform: "TikTok",
+    category: "Engagement",
+    goal: "Viral",
+    title: "Stitch & Duet konten trending",
     body: 'Reaksi terhadap konten viral lebih mudah masuk FYP daripada konten original. Stitch video "rate my art style" atau tren "anime vs reality".',
-    action: '⚡ Action: Monitor trending sounds di tab Discover setiap minggu.',
+    action: "⚡ Action: Monitor trending sounds di tab Discover setiap minggu.",
   },
   {
-    platform: 'TikTok',
-    category: 'Konsistensi',
-    goal: 'Nambah Followers',
-    title: 'Posting 1x sehari selama 30 hari pertama',
-    body: 'Algoritma TikTok reward akun yang konsisten di awal. 30 hari sprint di awal bisa 10x lebih efektif dari posting sporadis selama setahun.',
-    action: '⚡ Action: Batch record 7 video sekaligus, jadwalkan otomatis.',
+    platform: "TikTok",
+    category: "Konsistensi",
+    goal: "Nambah Followers",
+    title: "Posting 1x sehari selama 30 hari pertama",
+    body: "Algoritma TikTok reward akun yang konsisten di awal. 30 hari sprint di awal bisa 10x lebih efektif dari posting sporadis selama setahun.",
+    action: "⚡ Action: Batch record 7 video sekaligus, jadwalkan otomatis.",
   },
   {
-    platform: 'TikTok',
-    category: 'Branding',
-    goal: 'Dapet Komisi',
-    title: 'Pinned video = etalase komisianmu',
+    platform: "TikTok",
+    category: "Branding",
+    goal: "Dapet Komisi",
+    title: "Pinned video = etalase komisianmu",
     body: 'Pin 3 video terbaikmu: 1 showcase hasil komisi, 1 proses speed draw, 1 video "commission open". Ini yang pertama dilihat calon klien.',
-    action: '⚡ Action: Atur 3 pinned video di profil sekarang.',
+    action: "⚡ Action: Atur 3 pinned video di profil sekarang.",
   },
 
   // TWITTER/X - ALGORITMA
   {
-    platform: 'Twitter/X',
-    category: 'Algoritma',
-    goal: 'Viral',
-    title: 'Post karya tanpa link eksternal',
-    body: 'X/Twitter sangat men-downgrade post yang berisi link (ke IG, Pixiv, dll). Post karya langsung di X, simpan link untuk reply atau bio.',
+    platform: "Twitter/X",
+    category: "Algoritma",
+    goal: "Viral",
+    title: "Post karya tanpa link eksternal",
+    body: "X/Twitter sangat men-downgrade post yang berisi link (ke IG, Pixiv, dll). Post karya langsung di X, simpan link untuk reply atau bio.",
     action:
-      '⚡ Action: Upload gambar langsung ke X, jangan link dari platform lain.',
+      "⚡ Action: Upload gambar langsung ke X, jangan link dari platform lain.",
   },
   {
-    platform: 'Twitter/X',
-    category: 'Engagement',
-    goal: 'Nambah Followers',
+    platform: "Twitter/X",
+    category: "Engagement",
+    goal: "Nambah Followers",
     title: 'Thread "proses karya" selalu perform bagus',
-    body: 'Komunitas art di X sangat menghargai behind-the-scenes. Thread 5-7 tweet dari sketch → lineart → coloring → final bisa dapat ratusan retweet.',
-    action: '⚡ Action: Buat 1 thread proses karya per minggu.',
+    body: "Komunitas art di X sangat menghargai behind-the-scenes. Thread 5-7 tweet dari sketch → lineart → coloring → final bisa dapat ratusan retweet.",
+    action: "⚡ Action: Buat 1 thread proses karya per minggu.",
   },
   {
-    platform: 'Twitter/X',
-    category: 'Engagement',
-    goal: 'Viral',
-    title: 'Quote tweet artis besar dengan karyamu',
-    body: 'Quote tweet challenge atau prompt dari artis besar di niche-mu. Followers mereka akan lihat karyamu — exposure gratis ke audiens yang relevan.',
-    action: '⚡ Action: Ikuti minimal 1 art challenge atau prompt per minggu.',
+    platform: "Twitter/X",
+    category: "Engagement",
+    goal: "Viral",
+    title: "Quote tweet artis besar dengan karyamu",
+    body: "Quote tweet challenge atau prompt dari artis besar di niche-mu. Followers mereka akan lihat karyamu — exposure gratis ke audiens yang relevan.",
+    action: "⚡ Action: Ikuti minimal 1 art challenge atau prompt per minggu.",
   },
   {
-    platform: 'Twitter/X',
-    category: 'Branding',
-    goal: 'Dapet Komisi',
+    platform: "Twitter/X",
+    category: "Branding",
+    goal: "Dapet Komisi",
     title: 'Tweet "commission open" setiap Senin pagi',
-    body: 'Konsistensi pengumuman komisi membangun ekspektasi. Followers akan ingat dan menunggu. Sertakan contoh karya terbaru dan harga singkat.',
+    body: "Konsistensi pengumuman komisi membangun ekspektasi. Followers akan ingat dan menunggu. Sertakan contoh karya terbaru dan harga singkat.",
     action:
       '⚡ Action: Jadwalkan tweet "Commission Open" setiap Senin jam 08.00.',
   },
   {
-    platform: 'Twitter/X',
-    category: 'Konsistensi',
-    goal: 'Nambah Followers',
-    title: 'Engage di #FollowFriday dan art community',
-    body: 'Retweet dan komentari karya artis lain di niche yang sama. Komunitas X sangat mutual-driven — support orang lain = dapat support balik.',
+    platform: "Twitter/X",
+    category: "Konsistensi",
+    goal: "Nambah Followers",
+    title: "Engage di #FollowFriday dan art community",
+    body: "Retweet dan komentari karya artis lain di niche yang sama. Komunitas X sangat mutual-driven — support orang lain = dapat support balik.",
     action:
-      '⚡ Action: Luangkan 10 menit sehari untuk engage dengan 3-5 artis lain.',
+      "⚡ Action: Luangkan 10 menit sehari untuk engage dengan 3-5 artis lain.",
   },
 
   // MULTI-PLATFORM - KONSISTENSI & BRANDING
   {
-    platform: 'Instagram',
-    category: 'Konsistensi',
-    goal: 'Nambah Followers',
-    title: 'Batching konten = game changer',
-    body: 'Jangan buat konten hari H. Setiap Minggu, buat 3-4 konten sekaligus lalu jadwalkan. Ini menghilangkan tekanan harian dan menjaga konsistensi.',
-    action: '⚡ Action: Blokir 2-3 jam setiap Minggu untuk batching konten.',
+    platform: "Instagram",
+    category: "Konsistensi",
+    goal: "Nambah Followers",
+    title: "Batching konten = game changer",
+    body: "Jangan buat konten hari H. Setiap Minggu, buat 3-4 konten sekaligus lalu jadwalkan. Ini menghilangkan tekanan harian dan menjaga konsistensi.",
+    action: "⚡ Action: Blokir 2-3 jam setiap Minggu untuk batching konten.",
   },
   {
-    platform: 'TikTok',
-    category: 'Branding',
-    goal: 'Nambah Followers',
+    platform: "TikTok",
+    category: "Branding",
+    goal: "Nambah Followers",
     title: 'Punya "signature style" yang mudah dikenali',
-    body: 'Artis yang tumbuh cepat punya visual identity yang konsisten — color palette, jenis karakter, atau tema tertentu. Orang follow karena tahu apa yang akan mereka dapat.',
-    action: '⚡ Action: Tentukan 1-2 tema utama yang selalu kamu post.',
+    body: "Artis yang tumbuh cepat punya visual identity yang konsisten — color palette, jenis karakter, atau tema tertentu. Orang follow karena tahu apa yang akan mereka dapat.",
+    action: "⚡ Action: Tentukan 1-2 tema utama yang selalu kamu post.",
   },
   {
-    platform: 'Instagram',
-    category: 'Engagement',
-    goal: 'Dapet Komisi',
-    title: 'Testimoni klien = iklan terbaik',
-    body: 'Screenshot pujian klien (dengan izin) dan post sebagai Story atau feed. Social proof jauh lebih efektif dari self-promo untuk menarik klien baru.',
+    platform: "Instagram",
+    category: "Engagement",
+    goal: "Dapet Komisi",
+    title: "Testimoni klien = iklan terbaik",
+    body: "Screenshot pujian klien (dengan izin) dan post sebagai Story atau feed. Social proof jauh lebih efektif dari self-promo untuk menarik klien baru.",
     action:
-      '⚡ Action: Minta setiap klien untuk kasih feedback setelah komisi selesai.',
+      "⚡ Action: Minta setiap klien untuk kasih feedback setelah komisi selesai.",
   },
 ];
 
-let tipsFilters = { platform: 'semua', category: 'semua', goal: 'semua' };
+let tipsFilters = { platform: "semua", category: "semua", goal: "semua" };
 
 function renderTipsCards() {
-  const grid = document.getElementById('tips-grid');
+  const grid = document.getElementById("tips-grid");
   if (!grid) return;
 
   const filtered = TIPS_DATA.filter(
     (t) =>
-      (tipsFilters.platform === 'semua' ||
+      (tipsFilters.platform === "semua" ||
         t.platform === tipsFilters.platform) &&
-      (tipsFilters.category === 'semua' ||
+      (tipsFilters.category === "semua" ||
         t.category === tipsFilters.category) &&
-      (tipsFilters.goal === 'semua' || t.goal === tipsFilters.goal),
+      (tipsFilters.goal === "semua" || t.goal === tipsFilters.goal),
   );
 
   if (!filtered.length) {
@@ -1544,46 +1601,46 @@ function renderTipsCards() {
     </div>
   `,
     )
-    .join('');
+    .join("");
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   renderTipsCards();
 
-  document.querySelectorAll('.tips-tag').forEach((btn) => {
-    btn.addEventListener('click', () => {
+  document.querySelectorAll(".tips-tag").forEach((btn) => {
+    btn.addEventListener("click", () => {
       const filter = btn.dataset.filter;
       const val = btn.dataset.val;
       tipsFilters[filter] = val;
       // Update active state hanya di group yang sama
       btn
-        .closest('.tips-filter-btns')
-        .querySelectorAll('.tips-tag')
-        .forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
+        .closest(".tips-filter-btns")
+        .querySelectorAll(".tips-tag")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
       renderTipsCards();
     });
   });
 });
 
-document.querySelectorAll('.nav').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    if (btn.dataset.page === 'tips') renderTipsCards();
+document.querySelectorAll(".nav").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (btn.dataset.page === "tips") renderTipsCards();
   });
 });
 
 async function generateAITips() {
-  const platform = document.getElementById('ai-tips-platform').value;
-  const problem = document.getElementById('ai-tips-problem').value;
-  const followersVal = document.getElementById('ai-tips-followers').value;
-  const target = document.getElementById('ai-tips-target').value;
-  const desc = document.getElementById('ai-tips-desc').value.trim();
+  const platform = document.getElementById("ai-tips-platform").value;
+  const problem = document.getElementById("ai-tips-problem").value;
+  const followersVal = document.getElementById("ai-tips-followers").value;
+  const target = document.getElementById("ai-tips-target").value;
+  const desc = document.getElementById("ai-tips-desc").value.trim();
 
   const followersMap = {
-    nano: 'di bawah 1.000 followers',
-    micro: '1.000–10.000 followers',
-    mid: '10.000–50.000 followers',
-    macro: 'lebih dari 50.000 followers',
+    nano: "di bawah 1.000 followers",
+    micro: "1.000–10.000 followers",
+    mid: "10.000–50.000 followers",
+    macro: "lebih dari 50.000 followers",
   };
 
   const prompt = `Kamu adalah social media strategist spesialis untuk ilustrator anime/manga.
@@ -1593,7 +1650,7 @@ Situasi user:
 - Masalah: ${problem}
 - Followers saat ini: ${followersMap[followersVal]}
 - Target 3 bulan: ${target}
-${desc ? `- Deskripsi tambahan: ${desc}` : ''}
+${desc ? `- Deskripsi tambahan: ${desc}` : ""}
 
 Berikan 5 tips growth yang spesifik, actionable, dan realistis untuk situasi ini.
 Fokus pada strategi yang bisa langsung diterapkan hari ini.
@@ -1604,16 +1661,16 @@ Format setiap tips:
 [Penjelasan 2-3 kalimat]
 ⚡ Action: [langkah konkret yang bisa dilakukan hari ini]`;
 
-  const resultEl = document.getElementById('ai-tips-result');
-  resultEl.style.display = 'block';
-  resultEl.textContent = '⏳ AI sedang menyusun tips untuk situasimu...';
+  const resultEl = document.getElementById("ai-tips-result");
+  resultEl.style.display = "block";
+  resultEl.textContent = "⏳ AI sedang menyusun tips untuk situasimu...";
 
   try {
     const result = await askOllama(prompt);
     resultEl.textContent = result;
   } catch (err) {
     resultEl.textContent =
-      '❌ Gagal konek ke Groq. Cek API key atau koneksi internet.';
+      "❌ Gagal konek ke Groq. Cek API key atau koneksi internet.";
   }
 }
 
@@ -1621,23 +1678,23 @@ Format setiap tips:
 // AUTO-START & SETTINGS
 // =====================
 async function getAutoStart() {
-  return await ipcRenderer.invoke('get-autostart');
+  return await ipcRenderer.invoke("get-autostart");
 }
 
 async function setAutoStart(enable) {
-  const result = await ipcRenderer.invoke('set-autostart', enable);
-  const toggle = document.getElementById('toggle-autostart');
+  const result = await ipcRenderer.invoke("set-autostart", enable);
+  const toggle = document.getElementById("toggle-autostart");
   if (toggle) toggle.checked = result;
   showToast(
-    result ? '✅ Auto-start diaktifkan' : '📌 Auto-start dinonaktifkan',
+    result ? "✅ Auto-start diaktifkan" : "📌 Auto-start dinonaktifkan",
   );
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const toggle = document.getElementById('toggle-autostart');
+document.addEventListener("DOMContentLoaded", async () => {
+  const toggle = document.getElementById("toggle-autostart");
   if (toggle) {
     toggle.checked = await getAutoStart();
-    toggle.addEventListener('change', (e) => setAutoStart(e.target.checked));
+    toggle.addEventListener("change", (e) => setAutoStart(e.target.checked));
   }
 });
 // =====================
@@ -1666,13 +1723,13 @@ let chatHistory = [];
 let chatIsTyping = false;
 
 function appendChatBubble(role, content) {
-  const messagesEl = document.getElementById('chat-messages');
+  const messagesEl = document.getElementById("chat-messages");
   if (!messagesEl) return null;
 
-  const bubble = document.createElement('div');
+  const bubble = document.createElement("div");
   bubble.className = `chat-bubble ${role}`;
 
-  if (role === 'ai') {
+  if (role === "ai") {
     bubble.innerHTML = `
       <div class="chat-bubble-avatar">✦</div>
       <div class="chat-bubble-content">${content}</div>`;
@@ -1686,12 +1743,12 @@ function appendChatBubble(role, content) {
 }
 
 function showTypingIndicator() {
-  const messagesEl = document.getElementById('chat-messages');
+  const messagesEl = document.getElementById("chat-messages");
   if (!messagesEl) return null;
 
-  const bubble = document.createElement('div');
-  bubble.className = 'chat-bubble ai typing';
-  bubble.id = 'chat-typing-indicator';
+  const bubble = document.createElement("div");
+  bubble.className = "chat-bubble ai typing";
+  bubble.id = "chat-typing-indicator";
   bubble.innerHTML = `
     <div class="chat-bubble-avatar">✦</div>
     <div class="chat-bubble-content">
@@ -1705,31 +1762,31 @@ function showTypingIndicator() {
 }
 
 function removeTypingIndicator() {
-  const el = document.getElementById('chat-typing-indicator');
+  const el = document.getElementById("chat-typing-indicator");
   if (el) el.remove();
 }
 
 async function sendChatMessage() {
-  const input = document.getElementById('chat-input');
-  const sendBtn = document.getElementById('chat-send-btn');
+  const input = document.getElementById("chat-input");
+  const sendBtn = document.getElementById("chat-send-btn");
   if (!input || chatIsTyping) return;
 
   const message = input.value.trim();
   if (!message) return;
 
   // Reset input
-  input.value = '';
-  input.style.height = 'auto';
+  input.value = "";
+  input.style.height = "auto";
 
   // Sembunyikan suggestion chips setelah pertama kali kirim
-  const suggestions = document.getElementById('chat-suggestions');
-  if (suggestions) suggestions.style.display = 'none';
+  const suggestions = document.getElementById("chat-suggestions");
+  if (suggestions) suggestions.style.display = "none";
 
   // Tampilkan bubble user
-  appendChatBubble('user', escapeHtml(message));
+  appendChatBubble("user", escapeHtml(message));
 
   // Tambah ke history
-  chatHistory.push({ role: 'user', content: message });
+  chatHistory.push({ role: "user", content: message });
 
   // Lock UI
   chatIsTyping = true;
@@ -1738,17 +1795,17 @@ async function sendChatMessage() {
 
   try {
     const response = await fetch(
-      'https://api.groq.com/openai/v1/chat/completions',
+      "https://api.groq.com/openai/v1/chat/completions",
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${GROQ_API_KEY}`,
         },
         body: JSON.stringify({
           model: GROQ_MODEL,
           messages: [
-            { role: 'system', content: CHAT_SYSTEM_PROMPT },
+            { role: "system", content: CHAT_SYSTEM_PROMPT },
             ...chatHistory,
           ],
           max_tokens: 1024,
@@ -1761,15 +1818,15 @@ async function sendChatMessage() {
     if (data.error) throw new Error(data.error.message);
 
     const reply = data.choices[0].message.content;
-    chatHistory.push({ role: 'assistant', content: reply });
+    chatHistory.push({ role: "assistant", content: reply });
 
     removeTypingIndicator();
-    appendChatBubble('ai', formatChatReply(reply));
+    appendChatBubble("ai", formatChatReply(reply));
   } catch (err) {
     removeTypingIndicator();
     appendChatBubble(
-      'ai',
-      '❌ Gagal konek ke Groq. Cek API key atau koneksi internet.',
+      "ai",
+      "❌ Gagal konek ke Groq. Cek API key atau koneksi internet.",
     );
   } finally {
     chatIsTyping = false;
@@ -1780,21 +1837,21 @@ async function sendChatMessage() {
 
 function handleChatKey(event) {
   // Enter = kirim, Shift+Enter = baris baru
-  if (event.key === 'Enter' && !event.shiftKey) {
+  if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
     sendChatMessage();
   }
 }
 
 function autoResizeInput(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 120) + "px";
 }
 
 function useSuggestion(btn) {
-  const input = document.getElementById('chat-input');
+  const input = document.getElementById("chat-input");
   if (input) {
-    input.value = btn.textContent.replace(/^[^\w\s]*\s*/, ''); // hapus emoji di depan
+    input.value = btn.textContent.replace(/^[^\w\s]*\s*/, ""); // hapus emoji di depan
     input.focus();
     sendChatMessage();
   }
@@ -1802,7 +1859,7 @@ function useSuggestion(btn) {
 
 function clearChat() {
   chatHistory = [];
-  const messagesEl = document.getElementById('chat-messages');
+  const messagesEl = document.getElementById("chat-messages");
   if (!messagesEl) return;
   messagesEl.innerHTML = `
     <div class="chat-bubble ai">
@@ -1813,31 +1870,31 @@ function clearChat() {
     </div>`;
 
   // Tampilkan suggestion lagi
-  const suggestions = document.getElementById('chat-suggestions');
-  if (suggestions) suggestions.style.display = 'flex';
+  const suggestions = document.getElementById("chat-suggestions");
+  if (suggestions) suggestions.style.display = "flex";
 }
 
 // Format reply: bold **text**, newline jadi <br>
 function formatChatReply(text) {
   return escapeHtml(text)
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>');
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n/g, "<br>");
 }
 
 function escapeHtml(text) {
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 // Render dashboard saat nav chat diklik (sama seperti halaman lain)
-document.querySelectorAll('.nav').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    if (btn.dataset.page === 'chat') {
+document.querySelectorAll(".nav").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (btn.dataset.page === "chat") {
       setTimeout(() => {
-        document.getElementById('chat-input')?.focus();
+        document.getElementById("chat-input")?.focus();
       }, 50);
     }
   });
