@@ -1,6 +1,6 @@
 {
   "name": "artassist",
-  "version": "1.1.4",
+  "version": "1.1.8",
   "description": "AI Social Media Assistant untuk Illustrator",
   "main": "main.js",
   "scripts": {

@@ -77,6 +77,15 @@ const TYPE_LABELS = {
   speedpaint: "🎬 Speed Draw",
 };
 
+// Dipakai bareng oleh halaman Jadwal & Analisis Tren, supaya rekomendasi
+// konten (di kedua halaman) sama-sama disesuaikan dengan kapasitas riil
+// artist — bukan cuma nyaranin "artwork baru" tanpa mikir waktu pengerjaan.
+const COMPLEXITY_LABELS = {
+  sketch: "1-2 hari per karya (sketch/lineart)",
+  medium: "3-4 hari per karya (medium/coloring)",
+  detail: "5-7 hari per karya (full detail/rendering)",
+};
+
 function renderDashboard() {
   const now = new Date();
   const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -237,7 +246,7 @@ function extractField(text, field) {
   return match ? match[1] : "—";
 }
 
-function cleanOllamaJSON(raw) {
+function cleanGroqJSON(raw) {
   const jsonMatch = raw.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("No JSON found");
   return jsonMatch[0]
@@ -256,8 +265,9 @@ function cleanOllamaJSON(raw) {
 // ANALISIS TREN
 // =====================
 let lastTrendRecommendations = null;
+let lastTrendPlatform = null;
 
-// trendDataCache is defined in redditFetch.js.
+// trendDataCache is defined in trendFetch.js.
 
 document.addEventListener("DOMContentLoaded", () => {
   const trendMonth = document.getElementById("trend-month");
@@ -269,8 +279,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function generateTrendAnalysis() {
   const platform = document.getElementById("trend-platform").value;
+  lastTrendPlatform = platform;
   const focus = document.getElementById("trend-focus").value;
   const month = document.getElementById("trend-month").value;
+  const complexity = document.getElementById("trend-complexity").value;
+  const activeDays = document.getElementById("trend-active-days").value;
 
   const focusMap = {
     theme: "tema dan mood konten yang sedang populer di komunitas anime art",
@@ -311,7 +324,7 @@ async function generateTrendAnalysis() {
   let trendContext = "";
   try {
     cardsEl.innerHTML =
-      '<div style="color:#a78bfa; font-size:13px; grid-column:span 3">🌐 Mengambil data Reddit...</div>';
+      '<div style="color:#a78bfa; font-size:13px; grid-column:span 3">🌐 Mengambil data AniList & Danbooru...</div>';
     trendContext = await getTrendContext();
   } catch (err) {
     trendContext =
@@ -327,10 +340,22 @@ ${trendContext}
 
 Berdasarkan data tren real-time di atas, analisis ${focusMap[focus]} di ${platform} untuk bulan ${bulanLabel}.
 
+Kondisi artist (WAJIB dipatuhi supaya rekomendasi realistis, bukan cuma teori):
+- Waktu selesaikan 1 karya utama: ${COMPLEXITY_LABELS[complexity]}
+- Hari aktif menggambar per minggu: ${activeDays} hari
+
 PENTING:
 - Hubungkan data tren di atas dengan strategi konten anime art
 - Sebutkan judul anime atau tema spesifik yang lagi populer berdasarkan data
 - Berikan rekomendasi yang actionable dan spesifik
+- Sesuaikan JUMLAH & FREKUENSI konten "artwork baru" (karya jadi) dengan kapasitas artist di atas — jangan menyarankan lebih banyak karya baru daripada yang mungkin diselesaikan dalam hari aktif menggambar yang tersedia
+- Tapi JANGAN sebaliknya juga: kalau kapasitas artist cukup untuk minimal 1 karya baru per minggu, jadwal WAJIB tetap punya slot "artwork baru" tiap minggu — jangan isi minggu itu cuma dengan WIP/carousel/teks/speed draw doang. Slot bukan-karya (WIP, carousel, teks, speed draw) itu PENDAMPING karya, bukan pengganti karya
+- Kalau kompleksitas tinggi & hari aktif sedikit (jadi cuma cukup ~1 karya baru per 1-2 minggu), isi minggu yang tidak ada karya baru dengan WIP dari karya yang sedang dikerjakan, bukan konten template kosong
+${
+  platform === "Semua Platform"
+    ? '- Karena platform yang dipilih "Semua Platform", SEBAR rekomendasi ke Instagram, TikTok, dan Twitter/X secara bergantian (jangan cuma satu platform terus-terusan). Isi field "platform" di tiap item JSON sesuai platform yang direkomendasikan untuk item itu.'
+    : `- Semua rekomendasi harus untuk platform ${platform}. Isi field "platform" di tiap item JSON dengan "${platform}".`
+}
 
 Buat rencana untuk 4 MINGGU PENUH (satu bulan), bukan cuma satu pola yang diulang. Tiap minggu harus punya sub-tema/fokus konten yang BERBEDA (misal: minggu 1 fokus perkenalan karakter, minggu 2 seasonal/event, minggu 3 tutorial/proses, minggu 4 konten interaktif/community), supaya tidak monoton walau hari postingnya sama tiap minggu.
 
@@ -344,30 +369,30 @@ Balas HANYA dengan JSON berikut, tanpa teks di luar JSON:
   },
   "detail": "analisis lengkap dalam bahasa Indonesia 4-6 paragraf pendek sebut anime atau tema spesifik dari data tren",
   "rekomendasi_jadwal": [
-    {"minggu": 1, "hari": "Senin", "konten": "jenis konten spesifik berdasarkan tren", "jam": "19:00", "alasan": "alasan singkat berdasarkan data"},
-    {"minggu": 1, "hari": "Rabu", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 1, "hari": "Jumat", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 1, "hari": "Sabtu", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 2, "hari": "Senin", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 2, "hari": "Rabu", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 2, "hari": "Jumat", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 2, "hari": "Sabtu", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 3, "hari": "Senin", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 3, "hari": "Rabu", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 3, "hari": "Jumat", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 3, "hari": "Sabtu", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 4, "hari": "Senin", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 4, "hari": "Rabu", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 4, "hari": "Jumat", "konten": "...", "jam": "...", "alasan": "..."},
-    {"minggu": 4, "hari": "Sabtu", "konten": "...", "jam": "...", "alasan": "..."}
+    {"minggu": 1, "hari": "Senin", "platform": "Instagram", "konten": "jenis konten spesifik berdasarkan tren", "jam": "19:00", "alasan": "alasan singkat berdasarkan data"},
+    {"minggu": 1, "hari": "Rabu", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 1, "hari": "Jumat", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 1, "hari": "Sabtu", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 2, "hari": "Senin", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 2, "hari": "Rabu", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 2, "hari": "Jumat", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 2, "hari": "Sabtu", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 3, "hari": "Senin", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 3, "hari": "Rabu", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 3, "hari": "Jumat", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 3, "hari": "Sabtu", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 4, "hari": "Senin", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 4, "hari": "Rabu", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 4, "hari": "Jumat", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."},
+    {"minggu": 4, "hari": "Sabtu", "platform": "...", "konten": "...", "jam": "...", "alasan": "..."}
   ]
 }`;
 
   try {
-    const raw = await askOllama(prompt);
+    const raw = await askGroq(prompt);
     let data;
     try {
-      const cleaned = cleanOllamaJSON(raw);
+      const cleaned = cleanGroqJSON(raw);
       data = JSON.parse(cleaned);
     } catch (parseErr) {
       console.warn("JSON parse gagal, pakai fallback:", parseErr.message);
@@ -423,7 +448,7 @@ Balas HANYA dengan JSON berikut, tanpa teks di luar JSON:
     if (trendDataCache?.fetchedAt) {
       cardsEl.innerHTML += `
         <div style="grid-column:span 3; font-size:11px; color:#444; margin-top:4px">
-          🌐 Data diambil dari Reddit — ${trendDataCache.fetchedAt}
+          🌐 Data diambil dari AniList + Danbooru — ${trendDataCache.fetchedAt}
           <button onclick="getTrendContext(true).then(generateTrendAnalysis)"
             style="background:none; border:none; color:#a78bfa; font-size:11px; cursor:pointer; margin-left:8px">
             🔄 Refresh
@@ -435,6 +460,11 @@ Balas HANYA dengan JSON berikut, tanpa teks di luar JSON:
 
     const recs = data.rekomendasi_jadwal || [];
     lastTrendRecommendations = recs;
+    if (recs.length > 0 && recs.length < 16) {
+      console.warn(
+        `[TrendAnalysis] AI cuma balikin ${recs.length} rekomendasi (harusnya 16 — 4 hari x 4 minggu). Model kemungkinan tidak mengikuti instruksi jumlah item.`,
+      );
+    }
 
     if (!recs.length) {
       recEl.innerHTML =
@@ -455,7 +485,7 @@ Balas HANYA dengan JSON berikut, tanpa teks di luar JSON:
             .map(
               (r) => `
           <div class="trend-rec-item">
-            <div class="trend-rec-day">📅 ${r.hari}</div>
+            <div class="trend-rec-day">📅 ${r.hari}${r.platform ? ` · ${r.platform}` : ""}</div>
             <div class="trend-rec-content">
               <b>${r.konten}</b> — ${r.jam}<br>
               <span style="color:#666">${r.alasan}</span>
@@ -533,7 +563,11 @@ function applyTrendToSchedule() {
   function getDatesForWeekday(dayOfWeekNum) {
     if (weekdayDatesCache[dayOfWeekNum]) return weekdayDatesCache[dayOfWeekNum];
     const dates = [];
-    for (let d = startDay; d <= daysInMonth; d++) {
+    // Selalu hitung dari tanggal 1 supaya minggu 1-4 konsisten memetakan ke
+    // 4 tanggal yang berbeda di sepanjang bulan, terlepas dari tanggal hari ini.
+    // Filter tanggal yang sudah lewat dilakukan terpisah saat menulis data,
+    // bukan di sini — supaya tidak collapse ke index yang sama.
+    for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(y, m - 1, d);
       if (date.getDay() === dayOfWeekNum) dates.push(d);
     }
@@ -541,7 +575,18 @@ function applyTrendToSchedule() {
     return dates;
   }
 
+  // Platform fallback: kalau item rec gak punya field "platform" (mis. hasil
+  // analisis lama sebelum field ini ditambahkan), pakai platform yang dipilih
+  // di halaman Analisis Tren saat run terakhir. Kalau itu juga "Semua Platform"
+  // atau kosong, baru fallback ke Instagram.
+  const fallbackPlatform =
+    lastTrendPlatform && lastTrendPlatform !== "Semua Platform"
+      ? lastTrendPlatform
+      : "Instagram";
+
   let added = 0;
+  let overwritten = 0;
+  let skippedPast = 0;
   lastTrendRecommendations.forEach((rec) => {
     const targetDay = DAY_MAP[rec.hari];
     if (targetDay === undefined) return;
@@ -554,25 +599,39 @@ function applyTrendToSchedule() {
     // fallback ke kemunculan terakhir yang ada.
     const weekIdx = Math.min((rec.minggu || 1) - 1, dates.length - 1);
     const d = dates[weekIdx];
-    const dateStr = `${monthKey}-${String(d).padStart(2, "0")}`;
 
-    if (
-      !allData[monthKey][dateStr] ||
-      allData[monthKey][dateStr].length === 0
-    ) {
-      allData[monthKey][dateStr] = [
-        {
-          platform: "Instagram",
-          time: rec.jam || "19:00",
-          type: TYPE_FROM_KONTEN(rec.konten),
-          note: rec.konten,
-        },
-      ];
-      added++;
+    // Kalau tanggal ini udah lewat (bulan berjalan), skip — tapi jangan
+    // pengaruhi pemetaan minggu lain jadi collapse ke tanggal yang sama.
+    if (d < startDay) {
+      skippedPast++;
+      return;
     }
+
+    const dateStr = `${monthKey}-${String(d).padStart(2, "0")}`;
+    const alreadyHasData =
+      allData[monthKey][dateStr] && allData[monthKey][dateStr].length > 0;
+
+    // Sebelumnya slot yang udah terisi di-skip diam-diam, jadi apa yang
+    // ditampilkan di panel "Analisis" bisa beda dari yang beneran nyampe ke
+    // kalender. Sekarang: "Terapkan ke Jadwal" adalah aksi eksplisit user,
+    // jadi rekomendasi baru menang (overwrite), dan overwrite dihitung
+    // terpisah supaya user tau slot mana yang ketimpa.
+    if (alreadyHasData) overwritten++;
+    else added++;
+
+    allData[monthKey][dateStr] = [
+      {
+        platform: rec.platform || fallbackPlatform,
+        time: rec.jam || "19:00",
+        type: TYPE_FROM_KONTEN(rec.konten),
+        note: rec.konten,
+      },
+    ];
   });
 
-  localStorage.setItem("artassist-schedule-v2", JSON.stringify(allData));
+  const updatedJSON = JSON.stringify(allData);
+  localStorage.setItem("artassist-schedule-v2", updatedJSON);
+  ipcRenderer.send("schedule-updated", updatedJSON);
 
   // Sync input bulan di halaman Jadwal supaya kalender langsung tampil bulan yang benar
   const scheduleMonthInput = document.getElementById("schedule-month");
@@ -582,7 +641,10 @@ function applyTrendToSchedule() {
   const overlay = document.getElementById("modal-overlay");
   if (overlay) overlay.style.display = "none";
 
-  showToast(`✅ ${added} slot ditambahkan ke jadwal ${monthKey}!`);
+  const parts = [`✅ ${added} slot baru`];
+  if (overwritten > 0) parts.push(`${overwritten} slot ditimpa`);
+  if (skippedPast > 0) parts.push(`${skippedPast} dilewati (tanggal lewat)`);
+  showToast(`${parts.join(", ")} di jadwal ${monthKey}!`);
   renderDashboard();
   scheduleData = allData;
 
@@ -602,14 +664,19 @@ function showToast(msg, duration = 3000) {
 // GROQ API
 // =====================
 let GROQ_API_KEY = "";
-const GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+// meta-llama/llama-4-scout-17b-16e-instruct resmi di-shutdown Groq per 17 Jul 2026.
+// Model text pakai gpt-oss-120b (Production, stabil). Model vision (image_url)
+// cuma didukung qwen/qwen3.6-27b saat ini di Groq — dipisah biar caption/hashtag
+// generator yang pakai upload gambar tetap jalan.
+const GROQ_MODEL = "openai/gpt-oss-120b";
+const GROQ_VISION_MODEL = "qwen/qwen3.6-27b";
 
 // Load key saat app siap
 window.addEventListener("DOMContentLoaded", async () => {
   GROQ_API_KEY = await ipcRenderer.invoke("get-groq-key");
 });
 
-async function askOllama(prompt) {
+async function askGroq(prompt) {
   const response = await fetch(
     "https://api.groq.com/openai/v1/chat/completions",
     {
@@ -622,6 +689,9 @@ async function askOllama(prompt) {
         model: GROQ_MODEL,
         messages: [{ role: "user", content: prompt }],
         stream: false,
+        // Tanpa ini, respons panjang (mis. jadwal sebulan / rekomendasi 16 item)
+        // gampang kepotong di tengah JSON dan gagal di-parse.
+        max_tokens: 4096,
       }),
     },
   );
@@ -630,7 +700,7 @@ async function askOllama(prompt) {
   return data.choices[0].message.content;
 }
 
-async function askOllamaWithImage(prompt, base64Image) {
+async function askGroqWithImage(prompt, base64Image) {
   const response = await fetch(
     "https://api.groq.com/openai/v1/chat/completions",
     {
@@ -640,7 +710,7 @@ async function askOllamaWithImage(prompt, base64Image) {
         Authorization: `Bearer ${GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: GROQ_MODEL,
+        model: GROQ_VISION_MODEL,
         messages: [
           {
             role: "user",
@@ -654,6 +724,7 @@ async function askOllamaWithImage(prompt, base64Image) {
           },
         ],
         stream: false,
+        max_tokens: 4096,
       }),
     },
   );
@@ -720,7 +791,7 @@ Tema/mood: ${mood || "bebas"}
 Format: nomor. judul ide — cara eksekusinya singkat (1-2 kalimat). Langsung ke poin tanpa intro. Bahasa Indonesia yang natural.`;
 
   try {
-    const result = await askOllama(prompt);
+    const result = await askGroq(prompt);
     resultBox.textContent = result;
   } catch (err) {
     resultBox.textContent =
@@ -797,8 +868,8 @@ Bahasa Indonesia yang natural dan gaul.`;
 
   try {
     const result = currentImageBase64
-      ? await askOllamaWithImage(prompt, currentImageBase64)
-      : await askOllama(prompt);
+      ? await askGroqWithImage(prompt, currentImageBase64)
+      : await askGroq(prompt);
     resultBox.textContent = result;
   } catch (err) {
     resultBox.textContent =
@@ -912,8 +983,8 @@ Tulis hashtag langsung tanpa penjelasan. Gunakan bahasa Inggris dan Jepang (roma
 
   try {
     const result = currentImageBase64Hash
-      ? await askOllamaWithImage(prompt, currentImageBase64Hash)
-      : await askOllama(prompt);
+      ? await askGroqWithImage(prompt, currentImageBase64Hash)
+      : await askGroq(prompt);
     resultBox.textContent = result;
     document.getElementById("btn-copy-hash").style.display = "inline-block";
   } catch (err) {
@@ -1168,12 +1239,6 @@ async function generateScheduleSuggestion() {
   const totalDays = getDaysInMonth(monthKey);
   const [y, m] = monthKey.split("-");
 
-  const complexityMap = {
-    sketch: "1-2 hari per karya",
-    medium: "3-4 hari per karya",
-    detail: "5-7 hari per karya",
-  };
-
   let trendContext = "";
   try {
     trendContext = await getTrendContext();
@@ -1184,7 +1249,7 @@ ${trendContext ? `\n${trendContext}\n` : ""}
 Buat jadwal posting realistis untuk bulan ${monthKey} (total ${totalDays} hari).
 
 Kondisi artist:
-- Waktu selesaikan 1 karya: ${complexityMap[complexity]}
+- Waktu selesaikan 1 karya: ${COMPLEXITY_LABELS[complexity]}
 - Hari aktif menggambar per minggu: ${activeDays} hari
 - Jenis konten tersedia: artwork baru, WIP/behind the scenes, carousel/thread, konten teks/meme, speed draw
 
@@ -1192,14 +1257,17 @@ Aturan penting:
 - Karya baru hanya bisa dipost setelah cukup waktu menggambar
 - Hari tidak menggambar bisa diisi WIP, carousel, atau konten teks
 - Jangan lebih dari 1 post per hari
-- Total posting realistis maksimal 14-18 post
+- WAJIB: sebar tanggal post dari tanggal 1 SAMPAI tanggal ${totalDays} (akhir bulan), jangan cuma numpuk di awal bulan
+- Total posting realistis: minimal 14, maksimal 18 post, tersebar merata sepanjang ${totalDays} hari tersebut
 - Gunakan jam posting 07:00, 12:00, 19:00, atau 21:00
 - Pertimbangkan tren yang sedang populer dari data di atas
 
-Balas HANYA dengan JSON format ini, tanpa penjelasan apapun:
+Balas HANYA dengan JSON object berisi SEMUA tanggal post (bukan cuma 2 contoh di bawah — itu cuma nunjukin format), tanpa penjelasan apapun di luar JSON:
 {
   "${y}-${m}-03": [{"platform":"Instagram","time":"19:00","type":"artwork","note":"karya pertama bulan ini"}],
-  "${y}-${m}-07": [{"platform":"TikTok","time":"19:00","type":"wip","note":"proses sketching"}]
+  "${y}-${m}-07": [{"platform":"TikTok","time":"19:00","type":"wip","note":"proses sketching"}],
+  "${y}-${m}-11": [{"platform":"Instagram","time":"19:00","type":"noncreative","note":"..."}],
+  "...": "lanjutkan pola ini sampai tanggal ${totalDays}, total 14-18 entry tersebar merata sepanjang bulan"
 }
 
 type hanya boleh: artwork, wip, noncreative, carousel, speedpaint`;
@@ -1211,27 +1279,38 @@ type hanya boleh: artwork, wip, noncreative, carousel, speedpaint`;
   }
 
   try {
-    const raw = await askOllama(prompt);
+    const raw = await askGroq(prompt);
     let suggestion;
     try {
-      const cleaned = cleanOllamaJSON(raw);
+      const cleaned = cleanGroqJSON(raw);
       suggestion = JSON.parse(cleaned);
     } catch (e) {
       throw new Error("Format JSON tidak valid dari Groq");
     }
 
     if (!scheduleData[monthKey]) scheduleData[monthKey] = {};
+    let filled = 0;
+    let skippedExisting = 0;
     Object.keys(suggestion).forEach((dateStr) => {
       if (
         !scheduleData[monthKey][dateStr] ||
         scheduleData[monthKey][dateStr].length === 0
       ) {
         scheduleData[monthKey][dateStr] = suggestion[dateStr];
+        filled++;
+      } else {
+        skippedExisting++;
       }
     });
 
     saveSchedule();
     renderCalendar();
+
+    const info =
+      skippedExisting > 0
+        ? `✅ ${filled} hari diisi (${skippedExisting} dilewati karena sudah ada isi)`
+        : `✅ ${filled} hari diisi ke jadwal`;
+    showToast(info);
   } catch (err) {
     showToast("Gagal generate jadwal. Coba lagi atau isi manual.");
   } finally {
@@ -1314,7 +1393,7 @@ Bahasa Indonesia yang natural. Fokus untuk komunitas illustrator anime.`;
     '<div style="color:#a78bfa;font-size:13px">⏳ Generating...</div>';
 
   try {
-    const result = await askOllama(prompt);
+    const result = await askGroq(prompt);
     label.textContent = isTwitter
       ? `🧵 Thread (${count} tweets)`
       : `📖 Carousel (${count} slides)`;
@@ -1666,7 +1745,7 @@ Format setiap tips:
   resultEl.textContent = "⏳ AI sedang menyusun tips untuk situasimu...";
 
   try {
-    const result = await askOllama(prompt);
+    const result = await askGroq(prompt);
     resultEl.textContent = result;
   } catch (err) {
     resultEl.textContent =
